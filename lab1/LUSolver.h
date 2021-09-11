@@ -9,15 +9,15 @@ private:
 
     int getSize() { return size; };
 
-    LUSolver(int size);
     void decompose(double *A);
 
     void multiply(double *&x, double *&y, double *&res);
     void resetMatrix(double *&x);
     void setDiagonal(double *&x);
-    void printMatrix(double *&x, string matrixName);
+    void printMatrix(double *&x, std::string matrixName);
 
 public:
+    LUSolver(int size);
     void findDecomposition(double *&a);
     void printDecomposition();
 };

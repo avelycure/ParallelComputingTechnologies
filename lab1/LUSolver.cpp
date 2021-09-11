@@ -2,7 +2,7 @@
 
 LUSolver::LUSolver(int sizeParam)
 {
-    this->size = sizeParam;
+    size = sizeParam;
     l = new double[size * size];
     u = new double[size * size];
     x = new double[size * size];
@@ -67,7 +67,7 @@ void LUSolver::findDecomposition(double *&a)
     }
 }
 
-void LUSolver::printMatrix(double *&x, string matrixName)
+void LUSolver::printMatrix(double *&x, std::string matrixName)
 {
     cout << matrixName << endl;
     for (int i = 0; i < size; i++)
@@ -80,7 +80,7 @@ void LUSolver::printMatrix(double *&x, string matrixName)
 }
 
 void LUSolver::printDecomposition()
-{
-printMatrix(l, "Matrix L");
-printMatrix(u, "Matrix U");
+{ 
+    printMatrix(l, "Matrix L");
+    printMatrix(u, "Matrix U");
 }

@@ -1,3 +1,3 @@
 all:
-	g++ main.cpp
+	g++ main.cpp LUSolver.cpp
 	./a.out
