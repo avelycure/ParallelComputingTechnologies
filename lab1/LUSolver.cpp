@@ -5,7 +5,6 @@ LUSolver::LUSolver(int sizeParam)
     size = sizeParam;
     l = new double[size * size];
     u = new double[size * size];
-    x = new double[size * size];
     m = new double[size * size];
 }
 
@@ -83,4 +82,6 @@ void LUSolver::printDecomposition()
 { 
     printMatrix(l, "Matrix L");
     printMatrix(u, "Matrix U");
+    multiply(l,u,m);
+    printMatrix(m, "Matrix A");
 }

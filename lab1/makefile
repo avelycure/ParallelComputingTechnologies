@@ -1,3 +1,3 @@
 all:
-	g++ main.cpp LUSolver.cpp
+	g++ main.cpp LUSolver.cpp matrixFuncs.cpp
 	./a.out

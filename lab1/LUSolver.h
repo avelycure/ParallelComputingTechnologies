@@ -3,7 +3,6 @@ class LUSolver
 private:
     double *l;
     double *u;
-    double *x;
     double *m;
     int size;
 
