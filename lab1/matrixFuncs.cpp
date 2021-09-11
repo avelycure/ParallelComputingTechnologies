@@ -20,10 +20,25 @@ void readFromFile(double *a, string fileName)
     indata.close();
 }
 
-void fillRandom(double *a, int size)
+void fillMatrixRandom(double *a, int size)
 {
     srand(time(0));
     for (int i = 0; i < size; i++)
         for (int j = 0; j < size; j++)
-            a[i * size + j] = ((double) rand()) / rand();
+            a[i * size + j] = ((double)rand()) / rand();
+}
+
+void fillVectorRandom(double *x, int size)
+{
+    srand(time(0));
+    for (int i = 0; i < size; i++)
+        x[i] = ((double)rand()) / rand();
+}
+
+void printVector(double *x, int size, std::string name)
+{
+    cout << "Vector " + name << endl;
+    for (int i = 0; i < size; i++)
+        cout << x[i] << " ";
+    cout << endl;
 }

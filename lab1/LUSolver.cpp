@@ -79,9 +79,49 @@ void LUSolver::printMatrix(double *&x, std::string matrixName)
 }
 
 void LUSolver::printDecomposition()
-{ 
+{
     printMatrix(l, "Matrix L");
     printMatrix(u, "Matrix U");
-    multiply(l,u,m);
+    multiply(l, u, m);
     printMatrix(m, "Matrix A");
+}
+
+LUSolver::~LUSolver()
+{
+    delete[] l;
+    delete[] u;
+    delete[] m;
+}
+
+double* LUSolver::solveWith(double *&b)
+{
+    double *x = new double[size];
+    double *y = new double[size];
+    forwardSubstitution(b, y);
+    backwordSubstitution(b, x, y);
+    return x;
+}
+
+void LUSolver::forwardSubstitution(double *&b, double *&y)
+{
+    double sum;
+    for (int i = 0; i < size; i++)
+    {
+        sum = 0.0;
+        for (int j = 0; j < i; j++)
+            sum = sum + l[i * size + j] * y[j];
+        y[i] = (b[i] - sum) ; // divided on l[i * size + i], but it is 1.0
+    }
+}
+
+void LUSolver::backwordSubstitution(double *&b, double *&x, double *&y)
+{
+    double sum;
+    for (int i = size - 1; i >= 0; i--)
+    {
+        sum = 0.0;
+        for (int j = size - 1; j > i; j--)
+            sum = sum + u[i * size + j] * x[j];
+        x[i] = (y[i] - sum) / u[i * size + i];
+    }
 }

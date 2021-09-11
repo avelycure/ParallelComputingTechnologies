@@ -9,4 +9,6 @@
 using namespace std;
 
 void readFromFile(double *a, string fileName);
-void fillRandom(double* a, int size);
+void fillMatrixRandom(double* a, int size);
+void fillVectorRandom(double* x, int size);
+void printVector(double *x, int size, std::string name);
