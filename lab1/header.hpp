@@ -4,7 +4,8 @@
 #include <string.h>
 #include <fstream>
 #include<time.h>
-#include "LUSolver.h"
+#include "LUSolver.hpp"
+#include "DemmelLuSolver.hpp"
 
 using namespace std;
 
