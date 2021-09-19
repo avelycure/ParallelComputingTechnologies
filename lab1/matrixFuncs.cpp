@@ -20,12 +20,12 @@ void readFromFile(double *a, string fileName)
     indata.close();
 }
 
-void fillMatrixRandom(double *a, int size)
+void fillMatrixRandom(double *a, int sizeM, int sizeN)
 {
     srand(time(0));
-    for (int i = 0; i < size; i++)
-        for (int j = 0; j < size; j++)
-            a[i * size + j] = ((double)rand()) / rand();
+    for (int i = 0; i < sizeM; i++)
+        for (int j = 0; j < sizeN; j++)
+            a[i * sizeM + j] = ((double)rand()) / rand();
 }
 
 void fillVectorRandom(double *x, int size)
