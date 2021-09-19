@@ -10,6 +10,11 @@ int main()
     //fillMatrixRandom(a, size);
     //fillVectorRandom(b, size);
 
+    DemmelLuSolver demmelLuSolver = DemmelLuSolver(size);
+    demmelLuSolver.setA(a);
+    demmelLuSolver.findDecomposition();
+    demmelLuSolver.printDecomposition();
+
     LUSolver luSolver = LUSolver(size);
 
     luSolver.findDecomposition(a);

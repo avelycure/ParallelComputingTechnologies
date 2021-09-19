@@ -6,8 +6,6 @@ private:
     double *m;
     int size;
 
-    int getSize() { return size; };
-
     void decompose(double *A);
 
     void multiply(double *&x, double *&y, double *&res);
@@ -15,13 +13,14 @@ private:
     void setDiagonal(double *&x);
     void printMatrix(double *&x, std::string matrixName);
 
-    void forwardSubstitution(double*& b, double *& y);
-    void backwordSubstitution(double*& b, double *&x, double *&y);
+    void forwardSubstitution(double *&b, double *&y);
+    void backwordSubstitution(double *&b, double *&x, double *&y);
 
 public:
+    int getSize() { return size; };
     LUSolver(int size);
     ~LUSolver();
     void findDecomposition(double *&a);
-    double* solveWith(double*& b);
+    double *solveWith(double *&b);
     void printDecomposition();
 };
