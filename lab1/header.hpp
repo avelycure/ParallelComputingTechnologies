@@ -2,10 +2,14 @@
 #include <fstream>
 #include <cmath>
 #include <string.h>
-#include <fstream>
 #include <time.h>
+#include <stdio.h>
+#include <omp.h>
+#include <stdlib.h>
+#include <chrono>
 #include "LUSolver.hpp"
 #include "DemmelLuSolver.hpp"
+#include "LUBlocked.hpp"
 
 using namespace std;
 

@@ -1,3 +1,3 @@
 all:
-	g++ main.cpp LUSolver.cpp matrixFuncs.cpp DemmelLuSolver.cpp
+	g++ main.cpp LUSolver.cpp matrixFuncs.cpp DemmelLuSolver.cpp LUBlocked.cpp
 	./a.out
