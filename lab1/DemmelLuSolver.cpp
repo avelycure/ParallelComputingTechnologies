@@ -18,6 +18,9 @@ void DemmelLuSolver::setA(double *x)
         a[i] = x[i];
 }
 
+/**
+ * LU decomposition in case of square matrix
+ */ 
 void DemmelLuSolver::findDecompositionSquare()
 {
     for (int i = 0; i < sizeM; i++)
@@ -30,6 +33,9 @@ void DemmelLuSolver::findDecompositionSquare()
         }
 }
 
+/**
+ * LU decomposition. Straight algorithm
+ */
 void DemmelLuSolver::findDecomposition()
 {
     int sizeX = std::min(sizeM - 1, sizeN);
@@ -50,6 +56,9 @@ void DemmelLuSolver::findDecomposition()
     }
 }
 
+/**
+ * Straight LU decomposition for block, whick starts at (iStart, jStart) and ends with (iEnd,jEnd)
+ */
 void DemmelLuSolver::findDecomposition(int iStart, int jStart, int iEnd, int jEnd)
 {
     int currentSize = jEnd - jStart;
