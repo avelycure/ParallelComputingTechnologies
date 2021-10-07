@@ -2,6 +2,7 @@
 
 LUBlocked::LUBlocked(size_t matrix_size_, size_t block_size_)
 {
+    srand(time(0));
     matrix_size = matrix_size_;
     block_size = block_size_;
     num_blocks = matrix_size / block_size;
@@ -84,21 +85,28 @@ void LUBlocked::A33(int ii, int jj, int kk)
 
 void LUBlocked::LUDecomposition()
 {
-    for (size_t i = 0; i < num_blocks; i++)
+    size_t i, j, k;
+    for (i = 0; i < num_blocks; i++)
     {
 
         A22(i);
 
-        for (size_t j = i + 1; j < num_blocks; j++)
+        #pragma omp parallel for private(j)
+        for (j = i + 1; j < num_blocks; ++j)
         {
             A23(i, j);
         }
 
-        for (size_t j = i + 1; j < num_blocks; j++)
+        #pragma omp parallel for private(j)
+        for (j = i + 1; j < num_blocks; ++j)
         {
             A32(i, j);
+        }
 
-            for (size_t k = i + 1; k < num_blocks; k++)
+        #pragma omp parallel for private(j, k)
+        for (j = i + 1; j < num_blocks; ++j)
+        {
+            for (k = i + 1; k < num_blocks; k++)
             {
                 A33(i, j, k);
             }
