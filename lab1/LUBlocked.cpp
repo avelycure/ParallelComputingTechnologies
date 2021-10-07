@@ -88,9 +88,8 @@ void LUBlocked::LUDecomposition()
     size_t i, j, k;
     for (i = 0; i < num_blocks; i++)
     {
-
         A22(i);
-
+     
         #pragma omp parallel for private(j)
         for (j = i + 1; j < num_blocks; ++j)
         {
