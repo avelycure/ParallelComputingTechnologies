@@ -1,5 +1,8 @@
 #include "header.hpp"
 
+/**
+ * Program which search lu decomposition of the matrix
+ */
 int main()
 {
     omp_set_num_threads(4);
