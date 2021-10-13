@@ -42,3 +42,34 @@ void printVector(double *x, int size, std::string name)
         cout << x[i] << " ";
     cout << endl;
 }
+
+void read_matr(string namefile, double*& matr, int n, int m) {
+    ifstream fin;
+    fin.open(namefile.c_str(), std::ios::in);
+    if (!fin.is_open()) {
+        std::cout << "Could not open file!\n";
+    } else {
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                fin >> matr[i * n + j];
+            }
+        }
+    }
+    fin.close();
+}
+
+void write_matr(string namefile, double*& matr, int n, int m) {
+    ofstream fout;
+    fout.open(namefile.c_str());
+    if (!fout.is_open()) {
+        std::cout << "Could not open file!\n";
+    } else {
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                fout << matr[i * n + j] << "\t";
+            }
+            fout << "\n";
+        }
+    }
+    fout.close();
+}
