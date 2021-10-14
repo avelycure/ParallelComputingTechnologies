@@ -12,9 +12,10 @@ int main()
     double timeBlockedParallel;
     
     //init
-    int sizeN = 512;
-    int sizeM = 512;
+    int sizeN = 1024;
+    int sizeM = 1024;
     int blockSize = 32; //128 best on 1024
+    int numThreads = 8;
 
     double *a = new double[sizeM * sizeN];
     double *aCopy = new double[sizeM * sizeN];
@@ -46,7 +47,7 @@ int main()
     // Part 3. Parallel LU decomposition straight
     luBlocked.setMatrix(a);
     begin = std::chrono::steady_clock::now();
-    luBlocked.decomposeParallel(4);
+    luBlocked.decomposeParallel(numThreads);
     end = std::chrono::steady_clock::now();
     timeBlockedParallel = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
     countError(a, luBlocked.getMatrix(), demmelLuSolver.getMatrix(), sizeN, sizeM);

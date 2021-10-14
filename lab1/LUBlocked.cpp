@@ -117,12 +117,12 @@ void LUBlocked::decompose()
     double *u12 = new double[blockSize * (matrixSize - blockSize)];
     double *l21 = new double[(matrixSize - blockSize) * blockSize];
 
+    // variable to increase efficity of work with cache
+    double temp;
+
     for (int bi = 0; bi < matrixSize - 1; bi += blockSize)
     {
-        // variable to increase efficity of work with cache
-        double temp;
-
-        // Copy of diagonal block
+        // Copy of a11
         for (int i = 0; i < blockSize; i++)
             for (int j = 0; j < blockSize; j++)
                 a11[i * blockSize + j] = matrix[(i + bi) * matrixSize + (j + bi)];
@@ -148,6 +148,8 @@ void LUBlocked::decompose()
             }
 
         // Filling u12 block
+        // a11 till the i-1 in each row is l11(from lu decomposition it is low triangle matrix)
+        // before this cycle u12 is matrix a12(we copied it)
         for (int j = 0; j < matrixSize - bi - blockSize; j++)
             for (int i = 1; i < blockSize; i++)
             {
@@ -158,6 +160,7 @@ void LUBlocked::decompose()
             }
 
         // Filling l21 block
+        // Analog of previous cycle
         for (int i = 0; i < matrixSize - bi - blockSize; i++)
             for (int j = 0; j < blockSize; j++)
             {
@@ -168,6 +171,7 @@ void LUBlocked::decompose()
             }
 
         // Substration
+        // Calculate matrix a22~
         for (int i = 0; i < matrixSize - bi - blockSize; i++)
             for (int j = 0; j < matrixSize - bi - blockSize; j++)
             {
@@ -213,22 +217,37 @@ void LUBlocked::decomposeParallel(int numTh)
     double temp;
     for (int bi = 0; bi < matrixSize - 1; bi += blockSize)
     {
-        // Copy diagonal block
+        // Copy a11
+#pragma omp parallel for private(temp) num_threads(numTh) if (numTh > 1)
         for (int i = 0; i < blockSize; i++)
+        {
             for (int j = 0; j < blockSize; j++)
+            {
                 a11[i * blockSize + j] = matrix[(i + bi) * matrixSize + (j + bi)];
+            }
+        }
 
         // Copy u12
+#pragma omp parallel for private(temp) num_threads(numTh) if (numTh > 1)
         for (int i = 0; i < matrixSize - bi - blockSize; i++)
+        {
             for (int j = 0; j < blockSize; j++)
+            {
                 u12[i * blockSize + j] = matrix[(j + bi) * matrixSize + (i + bi + blockSize)];
+            }
+        }
 
         // Copy l21
+#pragma omp parallel for private(temp) num_threads(numTh) if (numTh > 1)
         for (int i = 0; i < matrixSize - bi - blockSize; i++)
+        {
             for (int j = 0; j < blockSize; j++)
+            {
                 l21[i * blockSize + j] = matrix[(i + bi + blockSize) * matrixSize + (j + bi)];
+            }
+        }
 
-        // LU decomposition of diagonal block
+        // LU decomposition of a11
         for (int i = 0; i < blockSize - 1; i++)
         {
 #pragma omp parallel for private(temp) num_threads(numTh) if (numTh > 1)
@@ -272,8 +291,8 @@ void LUBlocked::decomposeParallel(int numTh)
                 l21[i * blockSize + j] = (l21[i * blockSize + j] - temp) / a11[j * blockSize + j];
             }
         }
-        
-        // Computing A22~
+
+        // Computing a22~
 #pragma omp parallel for private(temp) num_threads(numTh) if (numTh > 1)
         for (int i = 0; i < matrixSize - bi - blockSize; i++)
         {
@@ -289,19 +308,34 @@ void LUBlocked::decomposeParallel(int numTh)
         }
 
         // Copy diagonal block
+#pragma omp parallel for private(temp) num_threads(numTh) if (numTh > 1)
         for (int i = 0; i < blockSize; i++)
+        {
             for (int j = 0; j < blockSize; j++)
+            {
                 matrix[(i + bi) * matrixSize + (j + bi)] = a11[i * blockSize + j];
+            }
+        }
 
         // Copy u12
+#pragma omp parallel for private(temp) num_threads(numTh) if (numTh > 1)
         for (int i = 0; i < matrixSize - bi - blockSize; i++)
+        {
             for (int j = 0; j < blockSize; j++)
+            {
                 matrix[(j + bi) * matrixSize + (i + bi + blockSize)] = u12[i * blockSize + j];
+            }
+        }
 
         // Copy l21
+#pragma omp parallel for private(temp) num_threads(numTh) if (numTh > 1)
         for (int i = 0; i < matrixSize - bi - blockSize; i++)
+        {
             for (int j = 0; j < blockSize; j++)
+            {
                 matrix[(i + bi + blockSize) * matrixSize + (j + bi)] = l21[i * blockSize + j];
+            }
+        }
     }
 
     clearMemory(a11);
