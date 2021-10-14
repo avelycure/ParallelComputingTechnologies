@@ -3,8 +3,11 @@
 #include <cmath>
 #include <cstdlib>
 #include <cassert>
+#include <random>
+#include <algorithm>
+#include <chrono>
 
-double EPS = 1e-3;
+double EPS = 1e-6;
 
 // struct 
 
@@ -25,6 +28,9 @@ struct node
     {
         object = obj;
         root = parent;
+        
+        left = nullptr;
+        right = nullptr;
     }
 };
 
@@ -38,8 +44,9 @@ public:
 
 private:
     node *root;
-    bool is_close(double x, double y);
 };
+
+bool is_close(double, double);
 
 BadTree::BadTree(body* arr, size_t n)
 {
@@ -132,9 +139,9 @@ body BadTree::get(double key)
     return {NULL, NULL};
 }
 
-bool BadTree::is_close(double x, double y)
+bool is_close(double x, double y)
 {
-    if(abs(x - y) < EPS)
+    if(fabs(x - y) < EPS)
     {
         return true;
     }
@@ -144,26 +151,86 @@ bool BadTree::is_close(double x, double y)
     }
 }
 
+void get_sample(body* arr, size_t arr_size, body* sample, size_t sample_size)
+{
+    body* temp_arr = new body[arr_size];
+    std::copy(arr, arr + arr_size, temp_arr);
+    std::shuffle(temp_arr, temp_arr + arr_size, std::default_random_engine(42));
+    std::copy(temp_arr, temp_arr + sample_size, sample);
+    delete[] temp_arr;
+}
+
 int main()
 {
     srand(42);
-    size_t n = 4;
+    size_t n = 1000; //array size
+    size_t n_small = 400; //subarray size
     body* mass = new body[n];
+    body* submass = new body[n_small];
     BadTree *tree;
+
+    //timers
+    auto begin = std::chrono::steady_clock::now();
+    auto end = std::chrono::steady_clock::now();
+    auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
 
     for(size_t i = 0; i < n; ++i)
     {
         mass[i] = {-250 + 500*((double)rand() / RAND_MAX), (double)rand() / RAND_MAX * 1000};
     }
+    get_sample(mass, n, submass, n_small);
     tree =  new BadTree(mass, n);
 
-    for(size_t i = 0; i < n; ++i)
+    // std::cout << "init array:\n";
+    // for(size_t i = 0; i < n; ++i)
+    // {
+    //     std::cout << mass[i].x << " " << mass[i].m << "\n";
+    // }
+    // std::cout << "\nsubarray:\n";
+    // for(size_t i = 0; i < n_small; ++i)
+    // {
+    //     std::cout << submass[i].x << " " << submass[i].m << "\n";
+    // }
+
+    bool trigger = true; //test is all ok?
+    for(size_t i = 0; (i < n_small); ++i)
     {
-        std::cout << mass[i].x << " " << mass[i].m << "\n";
+        body finded = tree->get(submass[i].x);
+        if(!is_close(finded.m, submass[i].m))//may be better
+        {
+            trigger = false;
+            std::cout << i << "\n";
+            std::cout << finded.x << " " << finded.m << "\n";
+            std::cout << submass[i].x << " " << submass[i].m << "\n";
+            std::cout << (abs(submass[i].x - finded.x) < EPS) << "\n\n";
+        }    
+    }
+    if(!trigger)
+    {
+        std::cout << "not tested\n";
+    }
+    else
+    {
+        std::cout << "tested\n";
     }
 
-    body finded = tree->get(68.2793);
-    std::cout << "finded: " << finded.x << " " << finded.m << "\n";
+    begin = std::chrono::steady_clock::now();
+    double sumTree = 0;
+    for(size_t i = 0; i < n_small; ++i)
+    {
+        sumTree += tree->get(submass[i].x).m;
+    }
+    end = std::chrono::steady_clock::now();
+    elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin); 
+    std::cout << "sum tree: " << sumTree << "\n";
+    std::cout << "time ms: " << elapsed_ms.count() << "\n";
+
+    double sumMas = 0;
+    for(size_t i = 0; i < n_small; ++i)
+    {
+        sumMas += submass[i].m;
+    }
+    std::cout << "sum mass: " << sumMas << "\n";
 
     delete[] mass;
     delete tree;
