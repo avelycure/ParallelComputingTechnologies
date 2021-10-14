@@ -27,7 +27,6 @@ void DemmelLuSolver::findDecompositionSquare()
         for (int j = i + 1; j < sizeM; j++)
         {
             a[j * sizeM + i] /= a[i * sizeM + i];
-
             for (int k = i + 1; k < sizeM; k++)
                 a[j * sizeM + k] -= a[j * sizeM + i] * a[i * sizeM + k];
         }

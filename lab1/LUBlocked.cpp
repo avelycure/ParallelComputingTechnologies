@@ -1,21 +1,19 @@
 #include "header.hpp"
 
-LUBlocked::LUBlocked(size_t matrix_size_, size_t block_size_)
+void LUBlocked::setMatrix(double *x)
+    {
+        for (int i = 0; i < matrixSize * matrixSize; i++)
+            matrix[i] = x[i];
+    }
+
+LUBlocked::LUBlocked(int matrixSize_, int blockSize_)
 {
     srand(time(0));
-    matrix_size = matrix_size_;
-    block_size = block_size_;
-    num_blocks = matrix_size / block_size;
+    matrixSize = matrixSize_;
+    blockSize = blockSize_;
+    numBlocks = matrixSize / blockSize;
 
-    matrix = new double[matrix_size * matrix_size];
-
-    for (size_t i = 0; i < matrix_size; ++i)
-    {
-        for (size_t j = 0; j < matrix_size; ++j)
-        {
-            matrix[(i * matrix_size) + j] = rand() % 200 + 2;
-        }
-    }
+    matrix = new double[matrixSize * matrixSize];
 }
 
 LUBlocked::~LUBlocked()
@@ -25,15 +23,15 @@ LUBlocked::~LUBlocked()
 
 void LUBlocked::A22(int ii)
 {
-    for (size_t i = ii * block_size; i < (ii * block_size) + block_size - 1; i++)
+    for (size_t i = ii * blockSize; i < (ii * blockSize) + blockSize - 1; i++)
     {
-        for (size_t j = i + 1; j < (ii * block_size) + block_size; j++)
+        for (size_t j = i + 1; j < (ii * blockSize) + blockSize; j++)
         {
-            matrix[(j * matrix_size) + i] /= matrix[(i * matrix_size) + i];
+            matrix[(j * matrixSize) + i] /= matrix[(i * matrixSize) + i];
 
-            for (size_t k = i + 1; k < (ii * block_size) + block_size; k++)
+            for (size_t k = i + 1; k < (ii * blockSize) + blockSize; k++)
             {
-                matrix[(j * matrix_size) + k] = matrix[(j * matrix_size) + k] - (matrix[(j * matrix_size) + i] * matrix[(i * matrix_size) + k]);
+                matrix[(j * matrixSize) + k] = matrix[(j * matrixSize) + k] - (matrix[(j * matrixSize) + i] * matrix[(i * matrixSize) + k]);
             }
         }
     }
@@ -41,13 +39,13 @@ void LUBlocked::A22(int ii)
 
 void LUBlocked::A23(int ii, int jj)
 {
-    for (size_t i = ii * block_size; i < (ii * block_size) + (block_size - 1); i++)
+    for (size_t i = ii * blockSize; i < (ii * blockSize) + (blockSize - 1); i++)
     {
-        for (size_t j = i + 1; j < block_size; j++)
+        for (size_t j = i + 1; j < blockSize; j++)
         {
-            for (size_t k = jj * block_size; k < (jj * block_size) + block_size; k++)
+            for (size_t k = jj * blockSize; k < (jj * blockSize) + blockSize; k++)
             {
-                matrix[(j * matrix_size) + k] = matrix[(j * matrix_size) + k] - (matrix[(j * matrix_size) + i] * matrix[(i * matrix_size) + k]);
+                matrix[(j * matrixSize) + k] = matrix[(j * matrixSize) + k] - (matrix[(j * matrixSize) + i] * matrix[(i * matrixSize) + k]);
             }
         }
     }
@@ -55,15 +53,15 @@ void LUBlocked::A23(int ii, int jj)
 
 void LUBlocked::A32(int II, int JJ)
 {
-    for (size_t i = II * block_size; i < (II * block_size) + block_size; i++)
+    for (size_t i = II * blockSize; i < (II * blockSize) + blockSize; i++)
     {
-        for (size_t j = JJ * block_size; j < (JJ * block_size) + block_size; j++)
+        for (size_t j = JJ * blockSize; j < (JJ * blockSize) + blockSize; j++)
         {
-            matrix[(j * matrix_size) + i] /= matrix[(i * matrix_size) + i];
+            matrix[(j * matrixSize) + i] /= matrix[(i * matrixSize) + i];
 
-            for (size_t k = i + 1; k < (II * block_size) + block_size; k++)
+            for (size_t k = i + 1; k < (II * blockSize) + blockSize; k++)
             {
-                matrix[(j * matrix_size) + k] = matrix[(j * matrix_size) + k] - (matrix[(j * matrix_size) + i] * matrix[(i * matrix_size) + k]);
+                matrix[(j * matrixSize) + k] = matrix[(j * matrixSize) + k] - (matrix[(j * matrixSize) + i] * matrix[(i * matrixSize) + k]);
             }
         }
     }
@@ -71,13 +69,13 @@ void LUBlocked::A32(int II, int JJ)
 
 void LUBlocked::A33(int ii, int jj, int kk)
 {
-    for (size_t i = ii * block_size; i < (ii * block_size) + block_size; i++)
+    for (size_t i = ii * blockSize; i < (ii * blockSize) + blockSize; i++)
     {
-        for (size_t j = jj * block_size; j < (jj * block_size) + block_size; j++)
+        for (size_t j = jj * blockSize; j < (jj * blockSize) + blockSize; j++)
         {
-            for (size_t k = kk * block_size; k < (kk * block_size) + block_size; k++)
+            for (size_t k = kk * blockSize; k < (kk * blockSize) + blockSize; k++)
             {
-                matrix[(j * matrix_size) + k] = matrix[(j * matrix_size) + k] - (matrix[(j * matrix_size) + i] * matrix[(i * matrix_size) + k]);
+                matrix[(j * matrixSize) + k] = matrix[(j * matrixSize) + k] - (matrix[(j * matrixSize) + i] * matrix[(i * matrixSize) + k]);
             }
         }
     }
@@ -86,26 +84,26 @@ void LUBlocked::A33(int ii, int jj, int kk)
 void LUBlocked::LUDecomposition()
 {
     size_t i, j, k;
-    for (i = 0; i < num_blocks; i++)
+    for (i = 0; i < numBlocks; i++)
     {
         A22(i);
      
         #pragma omp parallel for private(j)
-        for (j = i + 1; j < num_blocks; ++j)
+        for (j = i + 1; j < numBlocks; ++j)
         {
             A23(i, j);
         }
 
         #pragma omp parallel for private(j)
-        for (j = i + 1; j < num_blocks; ++j)
+        for (j = i + 1; j < numBlocks; ++j)
         {
             A32(i, j);
         }
 
         #pragma omp parallel for private(j, k)
-        for (j = i + 1; j < num_blocks; ++j)
+        for (j = i + 1; j < numBlocks; ++j)
         {
-            for (k = i + 1; k < num_blocks; k++)
+            for (k = i + 1; k < numBlocks; k++)
             {
                 A33(i, j, k);
             }
@@ -113,98 +111,98 @@ void LUBlocked::LUDecomposition()
     }
 }
 
-void LUBlocked::block_LU_decomposition(double *&matr, int size, const int bs) {
-
-    // bs  Размер блока
-    // Диаг., U_12, L_21 блоки соответственно
-    double *A11 = new double[bs * bs];
-    double *U12 = new double[bs * (size - bs)];
-    double *L21 = new double[(size - bs) * bs];
+void LUBlocked::decompose() {
+    double *a11 = new double[blockSize * blockSize];//diagonal block
+    double *u12 = new double[blockSize * (matrixSize - blockSize)];
+    double *l21 = new double[(matrixSize - blockSize) * blockSize];
     
-    for (int bi = 0; bi < size - 1; bi += bs) {
-        double temp; // Временная переменная
-        // Копирование диагонального блока
-        for (int i = 0; i < bs; ++i) {
-            for (int j = 0; j < bs; ++j) {
-                A11[i * bs + j] = matr[(i + bi) * size + (j + bi)];
+    for (int bi = 0; bi < matrixSize - 1; bi += blockSize) {
+        double temp;
+        // Copy of diagonal block
+        for (int i = 0; i < blockSize; ++i) {
+            for (int j = 0; j < blockSize; ++j) {
+                a11[i * blockSize + j] = matrix[(i + bi) * matrixSize + (j + bi)];
             }
         }
-        // Копирование блока U_12
-        for (int i = 0; i < size - bi - bs; ++i) {
-            for (int j = 0; j < bs; ++j) {
-                U12[i * bs + j] = matr[(j + bi) * size + (i + bi + bs)];
+
+        // Copy u12 block
+        for (int i = 0; i < matrixSize - bi - blockSize; ++i) {
+            for (int j = 0; j < blockSize; ++j) {
+                u12[i * blockSize + j] = matrix[(j + bi) * matrixSize + (i + bi + blockSize)];
             }
         }
-        // Копирование блока L_21
-        for (int i = 0; i < size - bi - bs; ++i) {
-            for (int j = 0; j < bs; ++j) {
-                L21[i * bs + j] = matr[(i + bi + bs) * size + (j + bi)];
+
+        // Copy l21 block
+        for (int i = 0; i < matrixSize - bi - blockSize; ++i) {
+            for (int j = 0; j < blockSize; ++j) {
+                l21[i * blockSize + j] = matrix[(i + bi + blockSize) * matrixSize + (j + bi)];
             }
         }
-        // LU разложение диагонального блока
-        for (int i = 0; i < bs - 1; ++i) {
-            for (int j = i + 1; j < bs; ++j) {
-                temp = A11[j * bs + i] / A11[i * bs + i];
-                for (int k = i + 1; k < bs; ++k) {
-                    A11[j * bs + k] = A11[j * bs + k] - temp * A11[i * bs + k];
+
+        // LU decomposition of diagonal block
+        for (int i = 0; i < blockSize - 1; ++i) {
+            for (int j = i + 1; j < blockSize; ++j) {
+                temp = a11[j * blockSize + i] / a11[i * blockSize + i];
+                for (int k = i + 1; k < blockSize; ++k) {
+                    a11[j * blockSize + k] -= temp * a11[i * blockSize + k];
                 }
-                A11[j * bs + i] = temp;
+                a11[j * blockSize + i] = temp;
             }
         }
         // Заполнение блока U_12
-        for (int j = 0; j < size - bi - bs; ++j) {
-            for (int i = 1; i < bs; ++i) {
+        for (int j = 0; j < matrixSize - bi - blockSize; ++j) {
+            for (int i = 1; i < blockSize; ++i) {
                 temp = 0.0;
                 for (int k = 0; k <= i - 1; ++k) {
-                    temp += A11[i * bs + k] * U12[j * bs + k];
+                    temp += a11[i * blockSize + k] * u12[j * blockSize + k];
                 }
-                U12[j * bs + i] -= temp;
+                u12[j * blockSize + i] -= temp;
             }
         }
         // Заполнение блока L_21
-        for (int i = 0; i < size - bi - bs; ++i) {
-            for (int j = 0; j < bs; ++j) {
+        for (int i = 0; i < matrixSize - bi - blockSize; ++i) {
+            for (int j = 0; j < blockSize; ++j) {
                 temp = 0.0;
                 for (int k = 0; k <= j - 1; ++k) {
-                    temp += L21[i * bs + k] * A11[k * bs + j];
+                    temp += l21[i * blockSize + k] * a11[k * blockSize + j];
                 }
-                L21[i * bs + j] = (L21[i * bs + j] - temp) / A11[j * bs + j];
+                l21[i * blockSize + j] = (l21[i * blockSize + j] - temp) / a11[j * blockSize + j];
             }
         }
         // Вычитание перед рекурсией
-        for (int i = 0; i < size - bi - bs; ++i) {
-            for (int j = 0; j < size - bi - bs; ++j) {
+        for (int i = 0; i < matrixSize - bi - blockSize; ++i) {
+            for (int j = 0; j < matrixSize - bi - blockSize; ++j) {
                 temp = 0.0;
-                for (int k = 0; k < bs; ++k) {
-                     temp += L21[i * bs + k] * U12[j * bs + k];
+                for (int k = 0; k < blockSize; ++k) {
+                     temp += l21[i * blockSize + k] * u12[j * blockSize + k];
                 }
-                matr[(i + bi + bs) * size + (j + bi + bs)] -= temp;
+                matrix[(i + bi + blockSize) * matrixSize + (j + bi + blockSize)] -= temp;
             }
         }
         // Перенос лок. массивов в матрицу
         // Диаг. блок
-        for (int i = 0; i < bs; ++i) {
-            for (int j = 0; j < bs; ++j) {
-                matr[(i + bi) * size + (j + bi)] = A11[i * bs + j];
+        for (int i = 0; i < blockSize; ++i) {
+            for (int j = 0; j < blockSize; ++j) {
+                matrix[(i + bi) * matrixSize + (j + bi)] = a11[i * blockSize + j];
             }
         }
         // Блок U_12
-        for (int i = 0; i < size - bi - bs; ++i) {
-            for (int j = 0; j < bs; ++j) {
-                matr[(j + bi) * size + (i + bi + bs)] = U12[i * bs + j];
+        for (int i = 0; i < matrixSize - bi - blockSize; ++i) {
+            for (int j = 0; j < blockSize; ++j) {
+                matrix[(j + bi) * matrixSize + (i + bi + blockSize)] = u12[i * blockSize + j];
             }
         }
         // Блок L_21
-        for (int i = 0; i < size - bi - bs; ++i) {
-            for (int j = 0; j < bs; ++j) {
-                matr[(i + bi + bs) * size + (j + bi)] = L21[i * bs + j];
+        for (int i = 0; i < matrixSize - bi - blockSize; ++i) {
+            for (int j = 0; j < blockSize; ++j) {
+                matrix[(i + bi + blockSize) * matrixSize + (j + bi)] = l21[i * blockSize + j];
             }
         }
     }
 
-    clearMemory(A11);
-    clearMemory(U12);
-    clearMemory(L21);
+    clearMemory(a11);
+    clearMemory(u12);
+    clearMemory(l21);
 }
 
 void LUBlocked::clearMemory(double *obj) {

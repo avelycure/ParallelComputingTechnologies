@@ -2,14 +2,20 @@ class LUBlocked
 {
 public:
     double *matrix;
-    size_t matrix_size;
-    size_t block_size;
-    size_t num_blocks;
-    
-    LUBlocked(size_t matrix_size_, size_t block_size_);
+    int matrixSize;
+    int blockSize;
+    int numBlocks;
+
+    LUBlocked(int matrixSize_, int blockSize_);
     ~LUBlocked();
     void LUDecomposition();
-    void block_LU_decomposition(double *&matr, int size, const int bs);
+    void decompose();
+    
+    void setMatrix(double *x);
+    double* getMatrix()
+    {
+        return matrix;
+    };
 
 private:
     void A22(int);

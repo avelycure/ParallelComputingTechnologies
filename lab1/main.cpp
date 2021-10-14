@@ -3,64 +3,62 @@
 /**
  * Program which search lu decomposition of the matrix
  */
+void countError(double* a, double *a1, double *a2, int sizeN, int sizeM);
+
 int main()
 {
+    double timeStraight;
+    double timeStraightParallel;
+    double timeBlocked;
+    double timeBlockedParallel;
+    
     //init
-    int sizeN = 16;
-    int sizeM = 16;
+    int sizeN = 1024;
+    int sizeM = 1024;
+    int blockSize = 64; //128 best on 1024
 
     double *a = new double[sizeM * sizeN];
     double *aCopy = new double[sizeM * sizeN];
     double *b = new double[sizeM];
 
-    //readFromFile(a, "input_data/a.txt");
-    //readFromFile(b, "input_data/b.txt");
-
     fillMatrixRandom(a, sizeM, sizeN);
     copyMatrix(a, aCopy, sizeM);
 
-    //fillVectorRandom(b, size);
-
-    //Decompose
-
-    //Part 1. Common LU decomposition. Demmel variant.
+    // Decompose
+    // Part 1. Common LU decomposition. Demmel variant.
     DemmelLuSolver demmelLuSolver = DemmelLuSolver(sizeN, sizeM);
     demmelLuSolver.setA(a);
-    //demmelLuSolver.findDecomposition();
-    demmelLuSolver.findDecompositionSquare();//square variant
-    // demmelLuSolver.findDecomposition(0, 0, 4, 4);//block with size of matrix
-    // demmelLuSolver.printDecomposition();
+    auto begin = std::chrono::steady_clock::now();
+    demmelLuSolver.findDecompositionSquare();
+    auto end = std::chrono::steady_clock::now();
+    timeStraight = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
 
-    LUBlocked luBlocked = LUBlocked(16, 4);
-    luBlocked.block_LU_decomposition(aCopy, 16, 4);
+    // Part 2. Blocked decomposition
+    LUBlocked luBlocked = LUBlocked(sizeN, blockSize);
+    luBlocked.setMatrix(a);
+    begin = std::chrono::steady_clock::now();
+    luBlocked.decompose();
+    end = std::chrono::steady_clock::now();
+    timeBlocked = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
 
-    double *l1 = makeLFromA(aCopy, sizeM);
-    double *u1 = makeUFromA(aCopy, sizeM);
+    // Counting norm of error to compare results of two methods
+    //countError(a, luBlocked.getMatrix(), demmelLuSolver.getMatrix(), sizeN, sizeM);
 
-    double *l2 = makeLFromA(demmelLuSolver.getMatrix(), sizeM);
-    double *u2 = makeUFromA(demmelLuSolver.getMatrix(), sizeM);
+    cout << "Straight: " << timeStraight << endl;
+    cout << "Blocked: " << timeBlocked << endl;
+    cout << "StraightParallel: " << timeStraightParallel << endl;
+    cout << "BlockedParallel: " << timeBlockedParallel << endl;
+}
+
+void countError(double* a, double *a1, double *a2, int sizeN, int sizeM)
+{
+    double *l1 = makeLFromA(a1, sizeM);
+    double *u1 = makeUFromA(a1, sizeM);
+
+    double *l2 = makeLFromA(a2, sizeM);
+    double *u2 = makeUFromA(a2, sizeM);
 
     cout << "Norm0: " << findNorm(matr_product(l1, u1, sizeM), a, sizeM) << endl;
     cout << "Norm1: " << findNorm(matr_product(l2, u2, sizeM), a, sizeM) << endl;
-
-    cout << "Norm3: " << findNorm(demmelLuSolver.getMatrix(), aCopy, sizeM) << endl;
-
-    //Part 2. LU decomposition. Kalitkin variant.
-    // LUSolver luSolver = LUSolver(sizeM);
-    // luSolver.findDecomposition(a);
-    // luSolver.printDecomposition();
-
-    // double *res = luSolver.solveWith(b);
-    // printVector(res, sizeM, "Result");
-
-    //Part 3. Blocked LU decomposition
-    /*auto LU_step_by_step = LUBlocked(128 * 16, 512);
-
-    auto begin = std::chrono::steady_clock::now();
-    LU_step_by_step.LUDecomposition();
-    auto end = std::chrono::steady_clock::now();
-    // Mesuring time
-    auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin); 
-    std::cout << "elapsed ms: " << elapsed_ms.count() << "\n";
-*/
+    cout << "Norm2: " << findNorm(a1, a2, sizeM) << endl;
 }
