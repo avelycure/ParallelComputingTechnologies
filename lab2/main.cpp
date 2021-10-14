@@ -91,6 +91,14 @@ BadTree::~BadTree()
         }
         else if(current_node->right == nullptr && current_node->left == nullptr)
         {
+            if(current_node == current_node->root->right)
+            {
+                current_node->root->right = nullptr;
+            }
+            else if(current_node == current_node->root->left)
+            {
+                current_node->root->left = nullptr;
+            }
             delete current_node;
             current_node = root;
         }
