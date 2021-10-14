@@ -1,4 +1,4 @@
-#include "header.hpp"
+#include "../header.hpp"
 
 /**
  * Program which search lu decomposition of the matrix

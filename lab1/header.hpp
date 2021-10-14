@@ -7,9 +7,8 @@
 #include <omp.h>
 #include <stdlib.h>
 #include <chrono>
-#include "LUSolver.hpp"
-#include "DemmelLuSolver.hpp"
-#include "LUBlocked.hpp"
+#include "classes/DemmelLuSolver.hpp"
+#include "classes/LUBlocked.hpp"
 
 using namespace std;
 

@@ -1,5 +1,6 @@
-#include "header.hpp"
+#include "../header.hpp"
 
+//todo fix path to file
 void readFromFile(double *a, string fileName)
 {
     ifstream indata;

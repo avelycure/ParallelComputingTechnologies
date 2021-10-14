@@ -1,4 +1,4 @@
-#include "header.hpp"
+#include "../header.hpp"
 
 void LUBlocked::setMatrix(double *x)
 {
@@ -6,12 +6,10 @@ void LUBlocked::setMatrix(double *x)
         matrix[i] = x[i];
 }
 
-LUBlocked::LUBlocked(int matrixSize_, int blockSize_)
+LUBlocked::LUBlocked(int matrixSize, int blockSize)
 {
-    srand(time(0));
-    matrixSize = matrixSize_;
-    blockSize = blockSize_;
-    numBlocks = matrixSize / blockSize;
+    this->matrixSize = matrixSize;
+    this->blockSize = blockSize;
 
     matrix = new double[matrixSize * matrixSize];
 }
@@ -19,96 +17,6 @@ LUBlocked::LUBlocked(int matrixSize_, int blockSize_)
 LUBlocked::~LUBlocked()
 {
     delete[] matrix;
-}
-
-void LUBlocked::A22(int ii)
-{
-    for (size_t i = ii * blockSize; i < (ii * blockSize) + blockSize - 1; i++)
-    {
-        for (size_t j = i + 1; j < (ii * blockSize) + blockSize; j++)
-        {
-            matrix[(j * matrixSize) + i] /= matrix[(i * matrixSize) + i];
-
-            for (size_t k = i + 1; k < (ii * blockSize) + blockSize; k++)
-            {
-                matrix[(j * matrixSize) + k] = matrix[(j * matrixSize) + k] - (matrix[(j * matrixSize) + i] * matrix[(i * matrixSize) + k]);
-            }
-        }
-    }
-}
-
-void LUBlocked::A23(int ii, int jj)
-{
-    for (size_t i = ii * blockSize; i < (ii * blockSize) + (blockSize - 1); i++)
-    {
-        for (size_t j = i + 1; j < blockSize; j++)
-        {
-            for (size_t k = jj * blockSize; k < (jj * blockSize) + blockSize; k++)
-            {
-                matrix[(j * matrixSize) + k] = matrix[(j * matrixSize) + k] - (matrix[(j * matrixSize) + i] * matrix[(i * matrixSize) + k]);
-            }
-        }
-    }
-}
-
-void LUBlocked::A32(int II, int JJ)
-{
-    for (size_t i = II * blockSize; i < (II * blockSize) + blockSize; i++)
-    {
-        for (size_t j = JJ * blockSize; j < (JJ * blockSize) + blockSize; j++)
-        {
-            matrix[(j * matrixSize) + i] /= matrix[(i * matrixSize) + i];
-
-            for (size_t k = i + 1; k < (II * blockSize) + blockSize; k++)
-            {
-                matrix[(j * matrixSize) + k] = matrix[(j * matrixSize) + k] - (matrix[(j * matrixSize) + i] * matrix[(i * matrixSize) + k]);
-            }
-        }
-    }
-}
-
-void LUBlocked::A33(int ii, int jj, int kk)
-{
-    for (size_t i = ii * blockSize; i < (ii * blockSize) + blockSize; i++)
-    {
-        for (size_t j = jj * blockSize; j < (jj * blockSize) + blockSize; j++)
-        {
-            for (size_t k = kk * blockSize; k < (kk * blockSize) + blockSize; k++)
-            {
-                matrix[(j * matrixSize) + k] = matrix[(j * matrixSize) + k] - (matrix[(j * matrixSize) + i] * matrix[(i * matrixSize) + k]);
-            }
-        }
-    }
-}
-
-void LUBlocked::LUDecomposition()
-{
-    size_t i, j, k;
-    for (i = 0; i < numBlocks; i++)
-    {
-        A22(i);
-
-#pragma omp parallel for private(j)
-        for (j = i + 1; j < numBlocks; j++)
-        {
-            A23(i, j);
-        }
-
-#pragma omp parallel for private(j)
-        for (j = i + 1; j < numBlocks; j++)
-        {
-            A32(i, j);
-        }
-
-#pragma omp parallel for private(j, k)
-        for (j = i + 1; j < numBlocks; j++)
-        {
-            for (k = i + 1; k < numBlocks; k++)
-            {
-                A33(i, j, k);
-            }
-        }
-    }
 }
 
 void LUBlocked::decompose()
