@@ -10,6 +10,7 @@ public:
     ~LUBlocked();
     void LUDecomposition();
     void decompose();
+    void decomposeParallel(int numTh);
     
     void setMatrix(double *x);
     double* getMatrix()
