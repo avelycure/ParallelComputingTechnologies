@@ -13,8 +13,8 @@ int main()
     double timeBlockedParallel;
     
     //init
-    int sizeN = 1024;
-    int sizeM = 1024;
+    int sizeN = 512;
+    int sizeM = 512;
     int blockSize = 64; //128 best on 1024
 
     double *a = new double[sizeM * sizeN];
@@ -42,7 +42,7 @@ int main()
     timeBlocked = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
 
     // Counting norm of error to compare results of two methods
-    //countError(a, luBlocked.getMatrix(), demmelLuSolver.getMatrix(), sizeN, sizeM);
+    countError(a, luBlocked.getMatrix(), demmelLuSolver.getMatrix(), sizeN, sizeM);
 
     cout << "Straight: " << timeStraight << endl;
     cout << "Blocked: " << timeBlocked << endl;
