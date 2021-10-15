@@ -8,4 +8,4 @@ The goal of the laboratory work is to implement the LU-decomposition of the matr
 * Block LU decomposition parallel
 
 ## Results
-<img src="https://github.com/avelycure/avelycure/blob/master/assets/parallel_technologies/lab1/result.jpg" width="320" />
+<img src="https://github.com/avelycure/avelycure/blob/master/assets/parallel_technologies/lab1/lu.png" width="320" />
