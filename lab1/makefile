@@ -1,3 +1,3 @@
 all:
-	g++ src/main.cpp src/matrixFuncs.cpp src/DemmelLuSolver.cpp src/LUBlocked.cpp -fopenmp
+	g++ src/main.cpp src/matrixFuncs.cpp src/CommonLUDecomposer.cpp src/BlockedLUDecomposer.cpp -fopenmp
 	./a.out

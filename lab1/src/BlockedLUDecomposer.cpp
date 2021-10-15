@@ -1,12 +1,12 @@
 #include "../header.hpp"
 
-void LUBlocked::setMatrix(double *x)
+void BlockedLUDecomposer::setMatrix(double *x)
 {
     for (int i = 0; i < matrixSize * matrixSize; i++)
         matrix[i] = x[i];
 }
 
-LUBlocked::LUBlocked(int matrixSize, int blockSize)
+BlockedLUDecomposer::BlockedLUDecomposer(int matrixSize, int blockSize)
 {
     this->matrixSize = matrixSize;
     this->blockSize = blockSize;
@@ -14,12 +14,12 @@ LUBlocked::LUBlocked(int matrixSize, int blockSize)
     matrix = new double[matrixSize * matrixSize];
 }
 
-LUBlocked::~LUBlocked()
+BlockedLUDecomposer::~BlockedLUDecomposer()
 {
     delete[] matrix;
 }
 
-void LUBlocked::decompose()
+void BlockedLUDecomposer::findDecomposition()
 {
     double *a11 = new double[blockSize * blockSize]; //diagonal block
     double *u12 = new double[blockSize * (matrixSize - blockSize)];
@@ -111,12 +111,12 @@ void LUBlocked::decompose()
     clearMemory(l21);
 }
 
-void LUBlocked::clearMemory(double *obj)
+void BlockedLUDecomposer::clearMemory(double *obj)
 {
     delete[] obj;
 }
 
-void LUBlocked::decomposeParallel(int numTh)
+void BlockedLUDecomposer::findDecompositionParallel(int numTh)
 {
     double *a11 = new double[blockSize * blockSize];
     double *u12 = new double[blockSize * (matrixSize - blockSize)];

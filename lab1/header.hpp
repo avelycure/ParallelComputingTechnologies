@@ -7,14 +7,13 @@
 #include <omp.h>
 #include <stdlib.h>
 #include <chrono>
-#include "classes/DemmelLuSolver.hpp"
-#include "classes/LUBlocked.hpp"
+#include "classes/CommonLUDecomposer.hpp"
+#include "classes/BlockedLUDecomposer.hpp"
 
 using namespace std;
 
-void readFromFile(double *a, string fileName);
-void fillMatrixRandom(double* a, int sizeM, int sizeN);
-void fillVectorRandom(double* x, int sizeM);
+void fillMatrixRandom(double *a, int size);
+void fillVectorRandom(double* x, int size);
 void printVector(double *x, int size, std::string name);
 double findNorm(double *x, double *y, int size);
 void copyMatrix(double *x, double *y, int sizeN);
