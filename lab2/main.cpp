@@ -6,6 +6,7 @@
 #include <random>
 #include <algorithm>
 #include <chrono>
+#include "omp.h"
 
 double EPS = 1e-6;
 
@@ -54,32 +55,63 @@ BadTree::BadTree(body* arr, size_t n)
     
     size_t i;
     node* current_node;
+    #pragma omp parallel for private(i, current_node) num_threads(4)
     for(i = 1; i < n; ++i)
     {
         current_node = root;
         //do-while seems better but i cba writing it
-        while((arr[i].x > current_node->object.x && current_node->right != nullptr) || (arr[i].x < current_node->object.x && current_node->left != nullptr))
+        bool flag = true; //(arr[i].x > current_node->object.x && current_node->right != nullptr) || (arr[i].x < current_node->object.x && current_node->left != nullptr)
+        while(flag)
         {
             if(arr[i].x > current_node->object.x)
             {
-                current_node = current_node->right;
+                if(current_node->right != nullptr)
+                {
+                    current_node = current_node->right;
+                }
+                else
+                {
+                    #pragma omp critical
+                    if(current_node->right == nullptr)
+                    {
+                        current_node->right = new node(arr[i], current_node);
+                        flag = false;
+                    }
+                }
             }
             else if(arr[i].x < current_node->object.x)
             {
-                current_node = current_node->left;
+                if(current_node->left != nullptr)
+                {
+                    current_node = current_node->left;
+                }
+                else
+                {
+                    #pragma omp critical
+                    if(current_node->left == nullptr)
+                    {
+                        current_node->left = new node(arr[i], current_node);
+                        flag = false;
+                    }
+                }
             }
         }
 
-        if(arr[i].x > current_node->object.x)
-        {
-            assert(current_node->right == nullptr);
-            current_node->right = new node(arr[i], current_node);
-        }
-        else if(arr[i].x < current_node->object.x)
-        {
-            assert(current_node->left == nullptr);
-            current_node->left = new node(arr[i], current_node);
-        }
+        // // #pragma omp critical
+        // {
+        //     if(arr[i].x > current_node->object.x)
+        //     {
+        //         assert(current_node->right == nullptr);
+        //         // #pragma omp critical
+        //         current_node->right = new node(arr[i], current_node);
+        //     }
+        //     else if(arr[i].x < current_node->object.x)
+        //     {
+        //         assert(current_node->left == nullptr);
+        //         // #pragma omp critical
+        //         current_node->left = new node(arr[i], current_node);
+        //     }
+        // }
     }
 }
 
@@ -227,12 +259,16 @@ int main()
         std::cout << "tested\n";
     }
 
+
     begin = std::chrono::steady_clock::now();
+
     double sumTree = 0;
+    #pragma omp parallel for num_threads(4) reduction(+:sumTree)
     for(size_t i = 0; i < n_small; ++i)
     {
         sumTree += tree->get(submass[i].x).m;
     }
+
     end = std::chrono::steady_clock::now();
     elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin); 
     std::cout << "sum tree: " << sumTree << "\n";
@@ -244,6 +280,7 @@ int main()
         sumMas += submass[i].m;
     }
     std::cout << "sum mass: " << sumMas << "\n";
+    std::cout << "sumMass - sumTree " << sumMas - sumTree << "\n";
 
     delete[] mass;
     delete[] submass;
