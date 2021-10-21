@@ -6,7 +6,6 @@
 #include <random>
 #include <algorithm>
 #include <chrono>
-#include <fopenmp>
 
 double EPS = 1e-6;
 
