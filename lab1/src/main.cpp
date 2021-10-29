@@ -13,9 +13,9 @@ int main()
     double timeBlockedParallel;
 
     //init
-    int size = 512;
-    int blockSize = 32; //128 best on 1024
-    int numThreads = 8;
+    int size = 1024;
+    int blockSize = 128;
+    int numThreads = 2;
 
     double *a = new double[size * size];
     double *aCopy = new double[size * size];
@@ -42,12 +42,13 @@ int main()
     timeBlockedSequantial = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
 
     // Counting norm of error to compare results of two methods
+    cout << "*** Sequantial part ***" << endl;
     //countError(a, blockedLuDecomposer.getMatrix(), commonLuDecomposer.getMatrix(), size);
 
     // Part 3. Common LU decomposition parallel
     commonLuDecomposer.setMatrix(a);
     begin = std::chrono::steady_clock::now();
-    commonLuDecomposer.findDecompositionParallel();
+    commonLuDecomposer.findDecompositionParallel(numThreads);
     end = std::chrono::steady_clock::now();
     timeCommonParallel = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
 
@@ -57,8 +58,10 @@ int main()
     blockedLuDecomposer.findDecompositionParallel(numThreads);
     end = std::chrono::steady_clock::now();
     timeBlockedParallel = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
-    countError(a, blockedLuDecomposer.getMatrix(), commonLuDecomposer.getMatrix(), size);
+    cout << "*** Parallel part ***" << endl;
+    //countError(a, blockedLuDecomposer.getMatrix(), commonLuDecomposer.getMatrix(), size);
 
+    cout << "*** Time ***" << endl;
     cout << "CommonSequantial: " << timeCommonSequatial << endl;
     cout << "BlockedSequantial: " << timeBlockedSequantial << endl;
     cout << "CommonParallel: " << timeCommonParallel << endl;
@@ -73,7 +76,6 @@ void countError(double *a, double *a1, double *a2, int size)
     double *l2 = makeLFromA(a2, size);
     double *u2 = makeUFromA(a2, size);
 
-    cout << "Norm0: " << findNorm(matr_product(l1, u1, size), a, size) << endl;
-    cout << "Norm1: " << findNorm(matr_product(l2, u2, size), a, size) << endl;
-    cout << "Norm2: " << findNorm(a1, a2, size) << endl;
+    cout << "Norm blocked: " << findNorm(matr_product(l1, u1, size), a, size) << endl;
+    cout << "Norm common: " << findNorm(matr_product(l2, u2, size), a, size) << endl;
 }

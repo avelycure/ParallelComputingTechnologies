@@ -56,8 +56,6 @@ void BlockedLUDecomposer::findDecomposition()
             }
 
         // Filling u12 block
-        // a11 till the i-1 in each row is l11(from lu decomposition it is low triangle matrix)
-        // before this cycle u12 is matrix a12(we copied it)
         for (int j = 0; j < matrixSize - bi - blockSize; j++)
             for (int i = 1; i < blockSize; i++)
             {
@@ -126,7 +124,6 @@ void BlockedLUDecomposer::findDecompositionParallel(int numTh)
     for (int bi = 0; bi < matrixSize - 1; bi += blockSize)
     {
         // Copy a11
-#pragma omp parallel for private(temp) num_threads(numTh) if (numTh > 1)
         for (int i = 0; i < blockSize; i++)
         {
             for (int j = 0; j < blockSize; j++)
@@ -136,7 +133,6 @@ void BlockedLUDecomposer::findDecompositionParallel(int numTh)
         }
 
         // Copy u12
-#pragma omp parallel for private(temp) num_threads(numTh) if (numTh > 1)
         for (int i = 0; i < matrixSize - bi - blockSize; i++)
         {
             for (int j = 0; j < blockSize; j++)
@@ -146,7 +142,6 @@ void BlockedLUDecomposer::findDecompositionParallel(int numTh)
         }
 
         // Copy l21
-#pragma omp parallel for private(temp) num_threads(numTh) if (numTh > 1)
         for (int i = 0; i < matrixSize - bi - blockSize; i++)
         {
             for (int j = 0; j < blockSize; j++)

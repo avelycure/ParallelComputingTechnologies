@@ -34,16 +34,15 @@ void CommonLUDecomposer::findDecomposition()
 /**
  * LU decomposition in case of square matrix
  */
-void CommonLUDecomposer::findDecompositionParallel()
+void CommonLUDecomposer::findDecompositionParallel(int numTh)
 {
     int i, j, k;
     for (i = 0; i < size; i++)
     {
-#pragma omp parallel for private(j)
         for (j = i + 1; j < size; j++)
         {
             a[j * size + i] /= a[i * size + i];
-#pragma omp parallel for private(k)
+#pragma omp parallel for private(k) num_threads(numTh)
             for (k = i + 1; k < size; k++)
             {
                 a[j * size + k] -= a[j * size + i] * a[i * size + k];

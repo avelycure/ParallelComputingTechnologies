@@ -8,7 +8,7 @@ public:
     ~CommonLUDecomposer();
 
     void findDecomposition();
-    void findDecompositionParallel();
+    void findDecompositionParallel(int numTh);
     int getSize() { return size; };
     void setMatrix(double *a);
     double getMatrixElement(int i, int j) { return a[i * size + j]; };
