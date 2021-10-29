@@ -10,6 +10,8 @@
 
 double EPS = 1e-6;
 
+#define NUM_THREADS 2
+
 // struct 
 
 struct body
@@ -55,7 +57,7 @@ BadTree::BadTree(body* arr, size_t n)
     
     size_t i;
     node* current_node;
-    #pragma omp parallel for private(i, current_node) num_threads(4)
+    #pragma omp parallel for private(i, current_node) num_threads(NUM_THREADS)
     for(i = 1; i < n; ++i)
     {
         current_node = root;
@@ -263,7 +265,7 @@ int main()
     begin = std::chrono::steady_clock::now();
 
     double sumTree = 0;
-    #pragma omp parallel for num_threads(4) reduction(+:sumTree)
+    #pragma omp parallel for num_threads(NUM_THREADS) reduction(+:sumTree)
     for(size_t i = 0; i < n_small; ++i)
     {
         sumTree += tree->get(submass[i].x).m;

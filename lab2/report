@@ -1,0 +1,9 @@
+build tree time:
+1 thread:  18099
+2 threads:  9199 (~2)
+4 threads:  5248 (3.44)
+
+find sum time:
+1 thread:  6064
+2 threads: 2945 (~2)
+4 threads: 1541 (~4)
