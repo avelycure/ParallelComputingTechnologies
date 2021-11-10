@@ -1,9 +1,19 @@
-build tree time:
-1 thread:  18099
-2 threads:  9199 (~2)
-4 threads:  5248 (3.44)
+на кластере, время в милисекундах
 
-find sum time:
-1 thread:  6064
-2 threads: 2945 (~2)
-4 threads: 1541 (~4)
+buildtree:
+11187 #1 kernel
+6321  #2 kernels, 1.77x
+3526  #4 kernels, 3.17x
+
+findsum:
+4326
+2279 #1.90x
+1152 #3.76x
+
+overall:
+15513
+8600  #1.8x
+4678  #3.31
+
+
+#to do: there is no elapse for delete_tree

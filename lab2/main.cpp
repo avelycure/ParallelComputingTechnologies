@@ -198,7 +198,7 @@ int main()
 {
     srand(42);
     size_t n = 9000000; //array size
-    size_t n_small = n/3 - 1; //subarray size
+    size_t n_small = n / 3 - 1; //subarray size
     body* mass = new body[n];
     body* submass = new body[n_small];
     BadTree *tree;
@@ -214,7 +214,7 @@ int main()
         mass[i] = {log2(i+4) - sqrt(i) / 2 + sqrt(sqrt(i)) - sqrt(sqrt(sqrt(i))), log10(i+1)};
     }
     // get_sample(mass, n, submass, n_small);
-    std::shuffle(mass, mass + n,std::default_random_engine(42));
+    std::shuffle(mass, mass + n, std::default_random_engine(42));
 
     for(size_t i = 0; i < n_small; ++i)
     {
