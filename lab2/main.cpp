@@ -10,7 +10,7 @@
 
 double EPS = 1e-6;
 
-#define NUM_THREADS 2
+#define NUM_THREADS 4
 
 // struct 
 
@@ -211,7 +211,7 @@ int main()
 
     for(size_t i = 0; i < n; ++i)
     {
-        mass[i] = {-250.1 + 3.6436457 * i, 1.3 * i};
+        mass[i] = {log2(i+4) - sqrt(i) / 2 + sqrt(sqrt(i)) - sqrt(sqrt(sqrt(i))), log10(i+1)};
     }
     // get_sample(mass, n, submass, n_small);
     std::shuffle(mass, mass + n,std::default_random_engine(42));
@@ -283,6 +283,8 @@ int main()
     }
     std::cout << "sum mass: " << sumMas << "\n";
     std::cout << "sumMass - sumTree " << sumMas - sumTree << "\n";
+
+    std::cout << "overall time ms: " << build_tree_time.count() + elapsed_ms.count() << "\n";
 
     delete[] mass;
     delete[] submass;
