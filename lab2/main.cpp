@@ -10,7 +10,7 @@
 
 double EPS = 1e-6;
 
-#define NUM_THREADS 4
+#define NUM_THREADS 2
 
 // struct 
 
@@ -27,7 +27,7 @@ struct node
     node* right;
     node* root;
 
-    node(body obj, node* parent=nullptr)
+    node(body obj = {0, 0}, node* parent=nullptr)
     {
         object = obj;
         root = parent;
@@ -47,13 +47,20 @@ public:
 
 private:
     node *root;
+    node *arr;
 };
 
 bool is_close(double, double);
 
-BadTree::BadTree(body* arr, size_t n)
+BadTree::BadTree(body* arr_, size_t n)
 {
-    root = new node(arr[0]);
+    root = new node(arr_[0]);
+    arr = new node[n];
+
+    for (size_t i = 0; i < n; ++i)
+    {
+        arr[i] = node(arr_[i]);
+    }
     
     size_t i;
     node* current_node;
@@ -65,7 +72,7 @@ BadTree::BadTree(body* arr, size_t n)
         bool flag = true; //(arr[i].x > current_node->object.x && current_node->right != nullptr) || (arr[i].x < current_node->object.x && current_node->left != nullptr)
         while(flag)
         {
-            if(arr[i].x > current_node->object.x)
+            if(arr_[i].x > current_node->object.x)
             {
                 if(current_node->right != nullptr)
                 {
@@ -76,12 +83,13 @@ BadTree::BadTree(body* arr, size_t n)
                     #pragma omp critical
                     if(current_node->right == nullptr)
                     {
-                        current_node->right = new node(arr[i], current_node);
+                        current_node->right = &arr[i];
+                        arr[i].root = current_node;
                         flag = false;
                     }
                 }
             }
-            else if(arr[i].x < current_node->object.x)
+            else if(arr_[i].x < current_node->object.x)
             {
                 if(current_node->left != nullptr)
                 {
@@ -92,7 +100,8 @@ BadTree::BadTree(body* arr, size_t n)
                     #pragma omp critical
                     if(current_node->left == nullptr)
                     {
-                        current_node->left = new node(arr[i], current_node);
+                        current_node->left = &arr[i];
+                        arr[i].root = current_node;
                         flag = false;
                     }
                 }
