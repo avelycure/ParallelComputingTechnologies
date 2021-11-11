@@ -10,7 +10,7 @@
 
 double EPS = 1e-6;
 
-#define NUM_THREADS 4
+#define NUM_THREADS 2
 
 // struct 
 
