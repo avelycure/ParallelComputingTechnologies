@@ -31,5 +31,9 @@
 *.out
 *.app
 
-#
-.vscode
+# vsCode files
+/.vscode
+
+# Object files
+*.out
+
