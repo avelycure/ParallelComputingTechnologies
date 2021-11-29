@@ -1,3 +1,3 @@
 all:
-	g++ main.cpp -o lab3.out
-	./lab3.out
+	mpiCC main.cpp -o lab3.out
+	mpirun -np 4 lab3.out
