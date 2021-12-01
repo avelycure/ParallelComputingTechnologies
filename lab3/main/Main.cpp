@@ -45,8 +45,15 @@ int main(int argc, char **argv)
     //synchronization, all processes will be blocked until end of the procedure
     double time;
     MPI_Barrier(MPI_COMM_WORLD);
-    jacobiSendReceive(y, initialCondition.h, initialCondition.n + 1, initialCondition.kSquare, numberOfProcesses, processId,
-                      initialCondition.eps, time, initialCondition);
+    jacobiSendReceive(y,
+                      initialCondition.h,
+                      initialCondition.n + 1,
+                      initialCondition.kSquare,
+                      numberOfProcesses,
+                      processId,
+                      initialCondition.eps,
+                      time,
+                      initialCondition);
 
     MPI_Finalize();
 }

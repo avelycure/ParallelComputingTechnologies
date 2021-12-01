@@ -26,85 +26,102 @@ double infiniteNorm(std::vector<double> &vec1, std::vector<double> &vec2, int be
     return norm;
 }
 
-void initVecLoc(std::vector<double> &y,
-                std::vector<double> &vec_right,
-                double h,
-                int size,
-                double k_square,
-                int processesNumber,
-                int processId,
-                std::vector<double> &y_loc,
-                std::vector<double> &y_loc_prev,
-                std::vector<double> &vec_right_loc,
-                std::vector<int> &len,
-                std::vector<int> &disp,
-                int &loc_size,
-                int &recv_disp,
-                int &extr_size,
-                int &offset)
+/**
+ * Set what parts of initial vector will work with every process
+ * @Offest and @displacement is all about offset, but @offset is offset in rows
+ * while displacement is offset in elements
+ * */
+void divideVectorBetweenProcesses(std::vector<double> &y,
+                                  double h,
+                                  int size,
+                                  double kSquare,
+                                  int processesNumber,
+                                  int processId,
+                                  std::vector<double> &yPart,
+                                  std::vector<double> &yPreviousPart,
+                                  std::vector<double> &partOfRightPart,
+                                  //integer array of number of elements sended to each process
+                                  std::vector<int> &numbersOfProcessDataParts,
+                                  //integer array of offsets in relation of y beginning, page 41
+                                  std::vector<int> &displacement,
+                                  int &vectorPartSize,
+                                  //????what for
+                                  int &receiveDisplacement,
+                                  int &extraSize,
+                                  int &offset)
 {
 
-    std::vector<int> vec_offset(processesNumber);
+    std::vector<int> vecOffset(processesNumber);
 
     if (processId == 0)
     {
-        len.resize(processesNumber);
-        disp.resize(processesNumber);
+        numbersOfProcessDataParts.resize(processesNumber);
+        displacement.resize(processesNumber);
 
-        for (int i = 0; i < processesNumber; ++i)
-            len[i] = (size / processesNumber) * size;
+        // divide initial vector on parts
+        for (int i = 0; i < processesNumber; i++)
+            numbersOfProcessDataParts[i] = (size / processesNumber) * size;
 
-        for (int i = 0; i < size - (size / processesNumber) * (processesNumber); ++i)
-            len[i] += size;
+        // case of not integer division
+        for (int i = 0; i < size - (size / processesNumber) * (processesNumber); i++)
+            numbersOfProcessDataParts[i] += size;
 
-        disp[0] = 0;
-        vec_offset[0] = -1;
-        //if (np > 1)
-        for (int i = 0; i < processesNumber - 1; ++i)
+        displacement[0] = 0;
+        vecOffset[0] = -1;
+
+        //set displacement and offset for all processes
+        for (int i = 0; i < processesNumber - 1; i++)
         {
-            disp[i + 1] = disp[i] + len[i];
-            vec_offset[i + 1] = vec_offset[i] + len[i] / size;
+            displacement[i + 1] = displacement[i] + numbersOfProcessDataParts[i];
+            vecOffset[i + 1] = vecOffset[i] + numbersOfProcessDataParts[i] / size;
         }
-        vec_offset[0] = 0;
+        vecOffset[0] = 0;
     }
-    //MPI_Barrier(MPI_COMM_WORLD);
 
-    // this procedure sends data, page 40
-    MPI_Scatter(len.data(), 1, MPI_INT, &loc_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Scatter(vec_offset.data(), 1, MPI_INT, &offset, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    // this procedures send 1 element of MPI_INT type from led.data/vecOffset from ROOT process
+    // in loc_size/offset variables of MPI_WORLD commutator
+    MPI_Scatter(numbersOfProcessDataParts.data(), 1, MPI_INT, &vectorPartSize, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Scatter(vecOffset.data(), 1, MPI_INT, &offset, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     if (processId == 0)
     {
         y.resize(size * size);
-        //vec_right.resize(size * size);
         fillVectorWithZeros(y);
-        //comp_vec_right(vec_right, size, h, k_square);
     }
 
+    // may be this also handles cases when we have not equal parts of the matrix
     if (processesNumber > 1)
     {
         if ((processId == 0) || (processId == processesNumber - 1))
         {
-            loc_size += size;
-            extr_size = 0.0;
+            vectorPartSize += size;
+            extraSize = 0.0;
         }
         else
         {
-            loc_size += 2 * size;
-            extr_size = size;
+            vectorPartSize += 2 * size;
+            extraSize = size;
         }
     }
     else
-        extr_size = -size;
+        extraSize = -size;
 
-    y_loc.resize(loc_size);
-    y_loc_prev.resize(loc_size);
-    vec_right_loc.resize(loc_size);
+    yPart.resize(vectorPartSize);
+    yPreviousPart.resize(vectorPartSize);
+    partOfRightPart.resize(vectorPartSize);
 
-    recv_disp = (processId == 0) ? 0.0 : size;
+    receiveDisplacement = (processId == 0) ? 0 : size;
 
-    MPI_Scatterv(y.data(), len.data(), disp.data(), MPI_DOUBLE, y_loc.data() + recv_disp, loc_size - size - extr_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    //MPI_Scatterv(vec_right.data() + size, len.data(), disp.data(), MPI_DOUBLE, vec_right_loc.data() + size, loc_size - 2 * size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    //Send data from root process
+    MPI_Scatterv(y.data(),
+                 numbersOfProcessDataParts.data(),
+                 displacement.data(),
+                 MPI_DOUBLE,
+                 yPart.data() + receiveDisplacement,
+                 vectorPartSize - size - extraSize,
+                 MPI_DOUBLE,
+                 0,
+                 MPI_COMM_WORLD);
 }
 
 void fillVectorWithZeros(std::vector<double> &y)
@@ -113,7 +130,7 @@ void fillVectorWithZeros(std::vector<double> &y)
         y[i] = 0.0;
 }
 
-void send_recv_scheme(
+void setInteractionsScheme(
     int processesNumber,
     const int processId,
     int &destination,
@@ -151,9 +168,6 @@ void send_recv_scheme(
     send2 = recv1;
     if ((processId == processesNumber - 1) && (processesNumber % 2 == 0))
         send2 = 0;
-
-    //fprintf(stdout, "myid = %d, source = %d, dest = %d, send1 = %d, recv1 = %d, send2 = %d, recv2 = %d", myid, source, dest, send1, recv1, send2, recv2);
-    //fflush(stdout);
 }
 
 void setSourceAndDestination(const int processesNumber, const int processId, int &destination, int &source)

@@ -14,9 +14,9 @@ void jacobiSendReceive(
     double &time,
     InitialConditions initialConditions)
 {
-    int loc_size;
-    int recv_disp;
-    int extr_size;
+    int vectorPartSize;
+    int receiveDisplacement;
+    int extraSize;
     int offset;
 
     int iterationsNumber = 0;
@@ -26,22 +26,28 @@ void jacobiSendReceive(
     double c = 1.0 / (4.0 + kSquare);
     kSquare = kSquare / (h * h);
 
-    int dest = 0, source = 0;
-    int send1 = 0, recv1 = 0, send2 = 0, recv2 = 0;
+    int destination = 0;
+    int source = 0;
+    int send1 = 0;
+    int recv1 = 0;
+    int send2 = 0;
+    int recv2 = 0;
 
     std::vector<double> vec_right;
-    std::vector<int> len;
-    std::vector<int> disp;
-    std::vector<double> y_loc;
-    std::vector<double> y_loc_prev;
-    std::vector<double> vec_right_loc;
+    std::vector<int> numbersOfProcessDataParts;
+    std::vector<int> displacement;
+    std::vector<double> yPart;
+    std::vector<double> yPreviousPart;
+    std::vector<double> partOfRightPart;
 
-    initVecLoc(y, vec_right, h, size, kSquare, numberOfProcesses, processId, y_loc, y_loc_prev, vec_right_loc, len, disp,
-               loc_size, recv_disp, extr_size, offset);
+    divideVectorBetweenProcesses(y, h, size, kSquare, numberOfProcesses, processId,
+                                 yPart, yPreviousPart, partOfRightPart, numbersOfProcessDataParts, displacement,
+                                 vectorPartSize, receiveDisplacement, extraSize, offset);
 
     if (numberOfProcesses > 1)
-        send_recv_scheme(numberOfProcesses, processId, dest, source, send1, recv1, send2, recv2);
+        setInteractionsScheme(numberOfProcesses, processId, destination, source, send1, recv1, send2, recv2);
 
+    //Upper Lower?
     MPI_Status statU, statL;
     double timeStart;
     double timeEnd;
@@ -53,30 +59,30 @@ void jacobiSendReceive(
     {
         iterationsNumber++;
 
-        y_loc_prev.swap(y_loc);
+        yPreviousPart.swap(yPart);
 
-        //Send Recv
-        MPI_Send(y_loc_prev.data() + loc_size - 2 * size, size * send1, MPI_DOUBLE, dest, 56, MPI_COMM_WORLD);
-        MPI_Recv(y_loc_prev.data(), size * recv1, MPI_DOUBLE, source, 56, MPI_COMM_WORLD, &statU);
-        MPI_Send(y_loc_prev.data() + loc_size - 2 * size, size * send2, MPI_DOUBLE, dest, 57, MPI_COMM_WORLD);
-        MPI_Recv(y_loc_prev.data(), size * recv2, MPI_DOUBLE, source, 57, MPI_COMM_WORLD, &statU);
+        // Block sending of data, page 12,16. Sends size * send1 elements to processId + 1 destination
+        MPI_Send(yPreviousPart.data() + vectorPartSize - 2 * size, size * send1, MPI_DOUBLE, destination, 56, MPI_COMM_WORLD);
+        MPI_Recv(yPreviousPart.data(), size * recv1, MPI_DOUBLE, source, 56, MPI_COMM_WORLD, &statU);
+        MPI_Send(yPreviousPart.data() + vectorPartSize - 2 * size, size * send2, MPI_DOUBLE, destination, 57, MPI_COMM_WORLD);
+        MPI_Recv(yPreviousPart.data(), size * recv2, MPI_DOUBLE, source, 57, MPI_COMM_WORLD, &statU);
 
-        MPI_Send(y_loc_prev.data() + size, size * recv2, MPI_DOUBLE, source, 65, MPI_COMM_WORLD);
-        MPI_Recv(y_loc_prev.data() + loc_size - size, size * send2, MPI_DOUBLE, dest, 65, MPI_COMM_WORLD, &statL);
-        MPI_Send(y_loc_prev.data() + size, size * recv1, MPI_DOUBLE, source, 67, MPI_COMM_WORLD);
-        MPI_Recv(y_loc_prev.data() + loc_size - size, size * send1, MPI_DOUBLE, dest, 67, MPI_COMM_WORLD, &statL);
+        MPI_Send(yPreviousPart.data() + size, size * recv2, MPI_DOUBLE, source, 65, MPI_COMM_WORLD);
+        MPI_Recv(yPreviousPart.data() + vectorPartSize - size, size * send2, MPI_DOUBLE, destination, 65, MPI_COMM_WORLD, &statL);
+        MPI_Send(yPreviousPart.data() + size, size * recv1, MPI_DOUBLE, source, 67, MPI_COMM_WORLD);
+        MPI_Recv(yPreviousPart.data() + vectorPartSize - size, size * send1, MPI_DOUBLE, destination, 67, MPI_COMM_WORLD, &statL);
 
-        for (int i = 1; i < loc_size / size - 1; ++i)
+        for (int i = 1; i < vectorPartSize / size - 1; ++i)
             for (int j = 1; j < size - 1; ++j)
-            {
-                //y_loc[i * size + j] = (h * h * vec_right_loc[i * size + j] \
-                    //+ y_loc_prev[(i - 1) * size + j] + y_loc_prev[(i + 1) * size + j] \
-                    //+ y_loc_prev[i * size + (j - 1)] + y_loc_prev[i * size + (j + 1)]) / (k_square + 4.0);
-                y_loc[i * size + j] = c * (h * h * initialConditions.func_right((i + offset) * h, j * h, kSquare) + y_loc_prev[(i - 1) * size + j] + y_loc_prev[(i + 1) * size + j] + y_loc_prev[i * size + (j - 1)] + y_loc_prev[i * size + (j + 1)]);
-            }
+                yPart[i * size + j] = c * (h * h * initialConditions.f((i + offset) * h, j * h, kSquare) +
+                                           yPreviousPart[(i - 1) * size + j] +
+                                           yPreviousPart[(i + 1) * size + j] +
+                                           yPreviousPart[i * size + (j - 1)] +
+                                           yPreviousPart[i * size + (j + 1)]);
 
-        norm = infiniteNorm(y_loc, y_loc_prev, recv_disp, loc_size - size);
+        norm = infiniteNorm(yPart, yPreviousPart, receiveDisplacement, vectorPartSize - size);
 
+        // one time find max from norm in all processes
         MPI_Allreduce(&norm, &finalNorm, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 
     } while (finalNorm > eps);
@@ -84,18 +90,21 @@ void jacobiSendReceive(
     if (processId == 0)
         timeEnd = MPI_Wtime();
 
-    MPI_Gatherv(y_loc.data() + recv_disp, loc_size - size - extr_size, MPI_DOUBLE, y.data(), len.data(), disp.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(yPart.data() + receiveDisplacement, vectorPartSize - size - extraSize, MPI_DOUBLE, y.data(),
+                numbersOfProcessDataParts.data(), displacement.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     if (processId == 0)
     {
-        std::cout << "jacobi, Send Recv:\n";
-        std::cout << "\tstop_crit = " << finalNorm << "\n\tNumber of iterations: " << iterationsNumber << "\n";
+        std::cout << "Jacobi. MPI_Send. MPI_Recv" << std::endl;
+        std::cout << "Substraction norm: " << finalNorm << std::endl;
+        std::cout << "Number of iterations: " << iterationsNumber << std::endl;
         //for (int i = 0; i < size; ++i) {
         //    for (int j = 0; j < size; ++j) {
         //        std::cout << y[i * size + j] << "\t";
         //    }
         //    std::cout << "\n";
         //}
+        std::cout << timeEnd - timeStart << std::endl;
     }
     time = timeEnd - timeStart;
 }

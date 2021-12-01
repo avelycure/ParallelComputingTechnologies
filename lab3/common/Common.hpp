@@ -10,16 +10,27 @@ void printLog(
     double khRelation,
     double eps);
 
-void initVecLoc(std::vector<double> &y, std::vector<double> &vec_right,
-                double h, int size, double k_square, int np, int myid, std::vector<double> &y_loc,
-                std::vector<double> &y_loc_prev, std::vector<double> &vec_right_loc, std::vector<int> &len,
-                std::vector<int> &disp, int &loc_size, int &recv_disp, int &extr_size, int &offset);
+void divideVectorBetweenProcesses(std::vector<double> &y,
+                                  double h,
+                                  int size,
+                                  double kSquare,
+                                  int processesNumber,
+                                  int processId,
+                                  std::vector<double> &yPart,
+                                  std::vector<double> &yPreviousPart,
+                                  std::vector<double> &partOfRightPart,
+                                  std::vector<int> &processPartOfData,
+                                  std::vector<int> &displacement,
+                                  int &vectorPartSize,
+                                  int &receiveDisplacement,
+                                  int &extraSize,
+                                  int &offset);
 
 double infiniteNorm(std::vector<double> &vec1, std::vector<double> &vec2, int begin, int end);
 
 void fillVectorWithZeros(std::vector<double> &y);
 
-void send_recv_scheme(const int np, const int myid, int &dest, int &source, int &send1, int &recv1, \
-    int &send2, int &recv2);
+void setInteractionsScheme(int processesNumber, int processId, int &dest, int &source, int &send1, int &recv1,
+                           int &send2, int &recv2);
 
-void setSourceAndDestination(int np, int myid, int &destination, int &source);
+void setSourceAndDestination(int processesNumber, int processId, int &destination, int &source);
