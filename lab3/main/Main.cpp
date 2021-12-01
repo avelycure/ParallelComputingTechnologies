@@ -27,6 +27,7 @@ int main(int argc, char **argv)
 
     if (processId == 0)
     {
+
         printLog(
             numberOfProcesses,
             initialCondition.n,
@@ -35,8 +36,17 @@ int main(int argc, char **argv)
 
         y.resize((initialCondition.n + 1) * (initialCondition.n + 1));
         solution.resize((initialCondition.n + 1) * (initialCondition.n + 1));
-        
+
         initialCondition.computeSolution(solution);
     }
+
+    //Jacobi send receceive part
+
+    //synchronization, all processes will be blocked until end of the procedure
+    double time;
+    MPI_Barrier(MPI_COMM_WORLD);
+    jacobiSendReceive(y, initialCondition.h, initialCondition.n + 1, initialCondition.kSquare, numberOfProcesses, processId,
+                      initialCondition.eps, time, initialCondition);
+
     MPI_Finalize();
 }

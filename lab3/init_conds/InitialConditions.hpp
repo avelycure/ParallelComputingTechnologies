@@ -1,5 +1,9 @@
 #include <vector>
+#pragma once
 
+/**
+ * Data class for storing initial information about ssun
+ * */
 class InitialConditions
 {
 public:
@@ -9,8 +13,14 @@ public:
     double h = (rightBorder - leftBorder) / n;
     double eps = 1e-8;
     double kSquare = 1.0;
+
     const double PI = 3.1415;
     const double PI_SQUARE = PI * PI;
+
+    double func_right(double x, double y, double k_square)
+    {
+        return (2.0 + (k_square + PI_SQUARE) * (1.0 - x) * x) * sin(PI * y);
+    }
 
     double fSolution(double x, double y)
     {
