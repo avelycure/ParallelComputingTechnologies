@@ -1,7 +1,7 @@
 all:
-	mpiCC main/main.cpp \
-	solvers/seidel/seidel.cpp \
-	solvers/jacobi/jacobi.cpp \
-	matrix_funcs/common.cpp \
+	mpiCC main/Main.cpp \
+	solvers/seidel/Seidel.cpp \
+	solvers/jacobi/Jacobi.cpp \
+	matrix_funcs/Common.cpp \
 	-o compiled/lab3.out
 	mpirun -np 4 compiled/lab3.out
