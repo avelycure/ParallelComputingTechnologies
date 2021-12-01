@@ -216,7 +216,7 @@ void jacobiV3(std::vector<double> &y,
               InitialConditions initialConditions)
 {
     int locationSize;
-    int receiceDisplacement;
+    int receiveDisplacement;
     int extraSize;
     int offset;
 
@@ -228,7 +228,7 @@ void jacobiV3(std::vector<double> &y,
     std::vector<double> partOfRightPart;
 
     divideVectorBetweenProcesses(y, h, size, kSquare, processesNumber, processId, yPart, yPreviousPart, partOfRightPart, numbersOfProcessDataParts, displace,
-                                 locationSize, receiceDisplacement, extraSize, offset);
+                                 locationSize, receiveDisplacement, extraSize, offset);
 
     int iterationsNumber = 0;
     double norm;
@@ -356,7 +356,7 @@ void jacobiV3(std::vector<double> &y,
     if (processId == 0)
         timeEnd = MPI_Wtime();
 
-    MPI_Gatherv(yPart.data() + receiceDisplacement, locationSize - size - extraSize, MPI_DOUBLE, y.data(), numbersOfProcessDataParts.data(), displace.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(yPart.data() + receiveDisplacement, locationSize - size - extraSize, MPI_DOUBLE, y.data(), numbersOfProcessDataParts.data(), displace.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     if (processId == 0)
     {
