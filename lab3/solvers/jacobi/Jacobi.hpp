@@ -1,5 +1,5 @@
 #include <vector>
-#include "../../matrix_funcs/Common.hpp"
+#include "../../common/Common.hpp"
 #include "../../mpi.h"
 #include <iostream>
 #include "../../init_conds/InitialConditions.hpp"
