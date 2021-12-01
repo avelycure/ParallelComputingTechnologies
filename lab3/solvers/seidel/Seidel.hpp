@@ -23,3 +23,13 @@ void seidelV2(std::vector<double> &y,
                         double eps,
                         double &time,
                         InitialConditions initialConditions);
+
+void seidelV3(std::vector<double> &y,
+                        double h,
+                        int size,
+                        double k_square,
+                        int processesNumber,
+                        int processId,
+                        double eps,
+                        double &time,
+                        InitialConditions initialConditions);

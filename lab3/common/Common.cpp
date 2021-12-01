@@ -6,7 +6,7 @@ void printLog(
     double khRelation,
     double eps)
 {
-    std::cout << "LOG" << std::endl;
+    std::cout << "\033[1;33mLOG\033[0m" << std::endl;
     std::cout << "numberOfProcesses = " << numberOfProcesses << std::endl;
     std::cout << "sumSize = " << sumSize << std::endl;
     std::cout << "k^2 / h^2 = " << khRelation << std::endl;
@@ -28,7 +28,7 @@ double infiniteNorm(std::vector<double> &vec1, std::vector<double> &vec2, int be
 
 /**
  * Set what parts of initial vector will work with every process
- * @Offest and @displacement is all about offset, but @offset is offset in rows
+ * @offest and @displacement is all about offset, but @offset is offset in rows
  * while displacement is offset in elements
  * */
 void divideVectorBetweenProcesses(std::vector<double> &y,

@@ -20,12 +20,15 @@ public:
     /**
      * Right part of equation
      * */
-    double f(double x, double y, double k_square)
+    double f(double x, double y, double kSquare)
     {
-        return sin(PI * y) * (2.0 + (k_square + PI_SQUARE) * (1.0 - x) * x);
+        return sin(PI * y) * (2.0 + (kSquare + PI_SQUARE) * (1.0 - x) * x);
     }
 
-    double fSolution(double x, double y)
+    /**
+    * Analytic solution of the equation
+    * */
+    double analyticSolution(double x, double y)
     {
         return (1.0 - x) * x * sin(PI * y);
     }
@@ -34,6 +37,6 @@ public:
     {
         for (int i = 0; i < n + 1; ++i)
             for (int j = 0; j < n + 1; ++j)
-                solution[i * (n + 1) + j] = fSolution(i * h, j * h);
+                solution[i * (n + 1) + j] = analyticSolution(i * h, j * h);
     }
 };
