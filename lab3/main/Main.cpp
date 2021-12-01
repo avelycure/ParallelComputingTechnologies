@@ -40,20 +40,30 @@ int main(int argc, char **argv)
         initialCondition.computeSolution(solution);
     }
 
-    //Jacobi send receceive part
-
+    //Jacobi part
     //synchronization, all processes will be blocked until end of the procedure
     double time;
     MPI_Barrier(MPI_COMM_WORLD);
-    jacobiSendReceive(y,
-                      initialCondition.h,
-                      initialCondition.n + 1,
-                      initialCondition.kSquare,
-                      numberOfProcesses,
-                      processId,
-                      initialCondition.eps,
-                      time,
-                      initialCondition);
+    //Used methods: MPI_Send. MPI_Recv
+    jacobiV1(y,
+             initialCondition.h,
+             initialCondition.n + 1,
+             initialCondition.kSquare,
+             numberOfProcesses,
+             processId,
+             initialCondition.eps,
+             time,
+             initialCondition);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    jacobiV2(
+        y, initialCondition.h,
+        initialCondition.n + 1, initialCondition.kSquare,
+        numberOfProcesses,
+        processId,
+        initialCondition.eps,
+        time,
+        initialCondition);
 
     MPI_Finalize();
 }
