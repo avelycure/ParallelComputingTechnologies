@@ -8,27 +8,31 @@ void jacobiV1(
     std::vector<double> &y,
     double h,
     int size,
-    double k_square,
+    double kSquare,
     int numberOfProcesses,
     int processId,
     double eps,
-    InitialConditions initialConditions);
+    InitialConditions initialConditions,
+    std::vector<double> &solution);
 
-void jacobiV2(std::vector<double> &y,
-              double h,
-              int size,
-              double kSquare,
-              int processesNumber,
-              int processId,
-              double eps,
-              InitialConditions initialConditions);
+void jacobiV2(
+    std::vector<double> &y,
+    double h,
+    int size,
+    double kSquare,
+    int numberOfProcesses,
+    int processId,
+    double eps,
+    InitialConditions initialConditions,
+    std::vector<double> &solution);
 
-
-void jacobiV3(std::vector<double> &y,
-              double h,
-              int size,
-              double kSquare,
-              int processesNumber,
-              int processId,
-              double eps,
-              InitialConditions initialConditions);
+void jacobiV3(
+    std::vector<double> &y,
+    double h,
+    int size,
+    double kSquare,
+    int numberOfProcesses,
+    int processId,
+    double eps,
+    InitialConditions initialConditions,
+    std::vector<double> &solution);

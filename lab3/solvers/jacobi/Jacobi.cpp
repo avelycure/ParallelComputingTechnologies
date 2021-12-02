@@ -12,7 +12,8 @@ void jacobiV1(
     int numberOfProcesses,
     int processId,
     double eps,
-    InitialConditions initialConditions)
+    InitialConditions initialConditions,
+    std::vector<double> &solution)
 {
     int vectorPartSize;
     int receiveDisplacement;
@@ -102,12 +103,8 @@ void jacobiV1(
         std::cout << "Substraction norm: " << finalNorm << std::endl;
         std::cout << "Number of iterations: " << iterationsNumber << std::endl;
         std::cout << "Time: " << timeEnd - timeStart << std::endl;
-        //for (int i = 0; i < size; ++i) {
-        //    for (int j = 0; j < size; ++j) {
-        //        std::cout << y[i * size + j] << "\t";
-        //    }
-        //    std::cout << "\n";
-        //}
+        double differenceWithAccurateSolution = infiniteNorm(y, solution, 0, y.size());
+        std::cout << "Diffrence: " << differenceWithAccurateSolution << std::endl;
     }
 };
 
@@ -118,10 +115,11 @@ void jacobiV2(std::vector<double> &y,
               double h,
               int size,
               double kSquare,
-              int processesNumber,
+              int numberOfProcesses,
               int processId,
               double eps,
-              InitialConditions initialConditions)
+              InitialConditions initialConditions,
+              std::vector<double> &solution)
 {
     int locationSize;
     int receiveDisplacement;
@@ -140,22 +138,22 @@ void jacobiV2(std::vector<double> &y,
     double finalNorm;
 
     double c = 1.0 / (4.0 + kSquare);
-    kSquare = kSquare / (h * h);
+    kSquare /= (h * h);
 
     int destination = 0;
     int source = 0;
 
-    int sendCount = (processId - (processesNumber - 1)) ? size : 0;
+    int sendCount = (processId - (numberOfProcesses - 1)) ? size : 0;
     int receiveCount = processId ? size : 0;
 
     double timeStart;
     double timeEnd;
 
-    divideVectorBetweenProcesses(y, h, size, kSquare, processesNumber, processId, yPart, yPreviousPart, partOfRightPart, numbersOfProcessDataParts, displacement,
+    divideVectorBetweenProcesses(y, h, size, kSquare, numberOfProcesses, processId, yPart, yPreviousPart, partOfRightPart, numbersOfProcessDataParts, displacement,
                                  locationSize, receiveDisplacement, extraSize, offset);
 
-    if (processesNumber > 1)
-        setSourceAndDestination(processesNumber, processId, destination, source);
+    if (numberOfProcesses > 1)
+        setSourceAndDestination(numberOfProcesses, processId, destination, source);
 
     if (processId == 0)
         timeStart = MPI_Wtime();
@@ -178,7 +176,7 @@ void jacobiV2(std::vector<double> &y,
 
         for (int i = 1; i < locationSize / size - 1; ++i)
             for (int j = 1; j < size - 1; ++j)
-                yPart[i * size + j] = c * (h * h * ((i + offset) * h, j * h, kSquare) + yPreviousPart[(i - 1) * size + j] +
+                yPart[i * size + j] = c * (h * h * initialConditions.f((i + offset) * h, j * h, kSquare) + yPreviousPart[(i - 1) * size + j] +
                                            yPreviousPart[(i + 1) * size + j] +
                                            yPreviousPart[i * size + (j - 1)] +
                                            yPreviousPart[i * size + (j + 1)]);
@@ -201,17 +199,21 @@ void jacobiV2(std::vector<double> &y,
         std::cout << "Substraction norm: " << finalNorm << std::endl;
         std::cout << "Number of iterations: " << iterationsNumber << std::endl;
         std::cout << "Time: " << timeEnd - timeStart << std::endl;
+        double differenceWithAccurateSolution = infiniteNorm(y, solution, 0, y.size());
+        std::cout << "Diffrence: " << differenceWithAccurateSolution << std::endl;
     }
 };
 
-void jacobiV3(std::vector<double> &y,
-              double h,
-              int size,
-              double kSquare,
-              int processesNumber,
-              int processId,
-              double eps,
-              InitialConditions initialConditions)
+void jacobiV3(
+    std::vector<double> &y,
+    double h,
+    int size,
+    double kSquare,
+    int numberOfProcesses,
+    int processId,
+    double eps,
+    InitialConditions initialConditions,
+    std::vector<double> &solution)
 {
     int locationSize;
     int receiveDisplacement;
@@ -225,7 +227,8 @@ void jacobiV3(std::vector<double> &y,
     std::vector<double> yPreviousPart;
     std::vector<double> partOfRightPart;
 
-    divideVectorBetweenProcesses(y, h, size, kSquare, processesNumber, processId, yPart, yPreviousPart, partOfRightPart, numbersOfProcessDataParts, displace,
+    divideVectorBetweenProcesses(y, h, size, kSquare, numberOfProcesses, processId, yPart,
+                                 yPreviousPart, partOfRightPart, numbersOfProcessDataParts, displace,
                                  locationSize, receiveDisplacement, extraSize, offset);
 
     int iterationsNumber = 0;
@@ -245,7 +248,7 @@ void jacobiV3(std::vector<double> &y,
     std::vector<MPI_Request> reqInOdd;
     std::vector<MPI_Request> reqOutOdd;
 
-    if ((processId == 0) || (processId == processesNumber - 1))
+    if ((processId == 0) || (processId == numberOfProcesses - 1))
     {
         reqInEven.resize(1);
         reqOutEven.resize(1);
@@ -264,7 +267,7 @@ void jacobiV3(std::vector<double> &y,
     int nInOdd = 0;
     int nOutOdd = 0;
 
-    if (processId != processesNumber - 1)
+    if (processId != numberOfProcesses - 1)
     {
         // page 30, non blocking sending. Only creates requests not doing it
         MPI_Send_init(yPreviousPart.data() + locationSize - 2 * size, size, MPI_DOUBLE, processId + 1, 56, MPI_COMM_WORLD, reqOutEven.data() + nOutEven);
@@ -363,5 +366,7 @@ void jacobiV3(std::vector<double> &y,
         std::cout << "Substraction norm: " << finalNorm << std::endl;
         std::cout << "Number of iterations: " << iterationsNumber << std::endl;
         std::cout << "Time: " << timeEnd - timeStart << std::endl;
+        double differenceWithAccurateSolution = infiniteNorm(y, solution, 0, y.size());
+        std::cout << "Diffrence: " << differenceWithAccurateSolution << std::endl;
     }
-}
+};
