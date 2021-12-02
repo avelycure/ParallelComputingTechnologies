@@ -14,7 +14,7 @@ public:
     double eps = 1e-8;
     double kSquare = 1.0;
 
-    const double PI = 3.1415;
+    const double PI = 3.14159265358979323846;
     const double PI_SQUARE = PI * PI;
 
     /**

@@ -234,9 +234,10 @@ void jacobiV3(
     int iterationsNumber = 0;
     double norm;
     double finalNorm;
+    double h2 = h * h;//h square
 
     double c = 1.0 / (4.0 + kSquare);
-    kSquare /= (h * h);
+    kSquare /= h2;
 
     double timeStart;
     double timeEnd;
@@ -316,7 +317,7 @@ void jacobiV3(
 
         for (int i = 2; i < locationSize / size - 2; ++i)
             for (int j = 1; j < size - 1; ++j)
-                yPart[i * size + j] = c * (h * h * initialConditions.f((i + offset) * h, j * h, kSquare) +
+                yPart[i * size + j] = c * (h2 * initialConditions.f((i + offset) * h, j * h, kSquare) +
                                            yPreviousPart[(i - 1) * size + j] +
                                            yPreviousPart[(i + 1) * size + j] +
                                            yPreviousPart[i * size + (j - 1)] +
@@ -335,7 +336,7 @@ void jacobiV3(
 
         int index = 1;
         for (int j = 1; j < size - 1; ++j)
-            yPart[index * size + j] = c * (h * h * initialConditions.f((index + offset) * h, j * h, kSquare) +
+            yPart[index * size + j] = c * (h2 * initialConditions.f((index + offset) * h, j * h, kSquare) +
                                            yPreviousPart[(index - 1) * size + j] +
                                            yPreviousPart[(index + 1) * size + j] +
                                            yPreviousPart[index * size + (j - 1)] +
@@ -343,7 +344,7 @@ void jacobiV3(
 
         index = locationSize / size - 2;
         for (int j = 1; j < size - 1; ++j)
-            yPart[index * size + j] = c * (h * h * initialConditions.f((index + offset) * h, j * h, kSquare) +
+            yPart[index * size + j] = c * (h2 * initialConditions.f((index + offset) * h, j * h, kSquare) +
                                            yPreviousPart[(index - 1) * size + j] +
                                            yPreviousPart[(index + 1) * size + j] +
                                            yPreviousPart[index * size + (j - 1)] +

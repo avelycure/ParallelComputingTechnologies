@@ -364,25 +364,21 @@ void seidelV3(std::vector<double> &y,
             MPI_Waitall(nOutBlack, reqOutBlack.data(), statOutBlack.data());
         }
 
-        {
-            int i = 1;
-            for (int j = ((i + offset + 1) % 2) + 1; j < size - 1; j += 2)
-                yPart[i * size + j] = c * (h_square * initialConditions.f((i + offset) * h, j * h, kSquare) +
-                                           yPreviousPart[(i - 1) * size + j] +
-                                           yPreviousPart[(i + 1) * size + j] +
-                                           yPreviousPart[i * size + (j - 1)] +
-                                           yPreviousPart[i * size + (j + 1)]);
-        }
+        int row = 1;
+        for (int j = ((row + offset + 1) % 2) + 1; j < size - 1; j += 2)
+            yPart[row * size + j] = c * (h_square * initialConditions.f((row + offset) * h, j * h, kSquare) +
+                                         yPreviousPart[(row - 1) * size + j] +
+                                         yPreviousPart[(row + 1) * size + j] +
+                                         yPreviousPart[row * size + (j - 1)] +
+                                         yPreviousPart[row * size + (j + 1)]);
 
-        {
-            int i = locationSize / size - 2;
-            for (int j = ((i + offset + 1) % 2) + 1; j < size - 1; j += 2)
-                yPart[i * size + j] = c * (h_square * initialConditions.f((i + offset) * h, j * h, kSquare) +
-                                           yPreviousPart[(i - 1) * size + j] +
-                                           yPreviousPart[(i + 1) * size + j] +
-                                           yPreviousPart[i * size + (j - 1)] +
-                                           yPreviousPart[i * size + (j + 1)]);
-        }
+        row = locationSize / size - 2;
+        for (int j = ((row + offset + 1) % 2) + 1; j < size - 1; j += 2)
+            yPart[row * size + j] = c * (h_square * initialConditions.f((row + offset) * h, j * h, kSquare) +
+                                         yPreviousPart[(row - 1) * size + j] +
+                                         yPreviousPart[(row + 1) * size + j] +
+                                         yPreviousPart[row * size + (j - 1)] +
+                                         yPreviousPart[row * size + (j + 1)]);
 
         if (iterationsNumber % 2 != 0)
         {
@@ -414,25 +410,21 @@ void seidelV3(std::vector<double> &y,
             MPI_Waitall(nOutRed, reqOutRed.data(), statOutRed.data());
         }
 
-        {
-            int i = 1;
-            for (int j = ((i + offset) % 2) + 1; j < size - 1; j += 2)
-                yPart[i * size + j] = c * (h_square * initialConditions.f((i + offset) * h, j * h, kSquare) +
-                                           yPart[(i - 1) * size + j] +
-                                           yPart[(i + 1) * size + j] +
-                                           yPart[i * size + (j - 1)] +
-                                           yPart[i * size + (j + 1)]);
-        }
+        row = 1;
+        for (int j = ((row + offset) % 2) + 1; j < size - 1; j += 2)
+            yPart[row * size + j] = c * (h_square * initialConditions.f((row + offset) * h, j * h, kSquare) +
+                                         yPart[(row - 1) * size + j] +
+                                         yPart[(row + 1) * size + j] +
+                                         yPart[row * size + (j - 1)] +
+                                         yPart[row * size + (j + 1)]);
 
-        {
-            int i = locationSize / size - 2;
-            for (int j = ((i + offset) % 2) + 1; j < size - 1; j += 2)
-                yPart[i * size + j] = c * (h_square * initialConditions.f((i + offset) * h, j * h, kSquare) +
-                                           yPart[(i - 1) * size + j] +
-                                           yPart[(i + 1) * size + j] +
-                                           yPart[i * size + (j - 1)] +
-                                           yPart[i * size + (j + 1)]);
-        }
+        row = locationSize / size - 2;
+        for (int j = ((row + offset) % 2) + 1; j < size - 1; j += 2)
+            yPart[row * size + j] = c * (h_square * initialConditions.f((row + offset) * h, j * h, kSquare) +
+                                         yPart[(row - 1) * size + j] +
+                                         yPart[(row + 1) * size + j] +
+                                         yPart[row * size + (j - 1)] +
+                                         yPart[row * size + (j + 1)]);
 
         norm = infiniteNorm(yPart, yPreviousPart, size, locationSize - size);
 
