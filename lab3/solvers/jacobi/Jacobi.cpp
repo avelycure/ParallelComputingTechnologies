@@ -60,19 +60,19 @@ void jacobiV1(
         for (int id = 0; id < numberOfProcesses - 1; id++)
         {
             if (processId == id)
-                MPI_Send(yPart.data() + locationSize - 2 * size, size, MPI_DOUBLE, processId + 1, 42, MPI_COMM_WORLD);
+                MPI_Send(yPreviousPart.data() + locationSize - 2 * size, size, MPI_DOUBLE, processId + 1, 42, MPI_COMM_WORLD);
 
             if (processId == id + 1)
-                MPI_Recv(yPart.data(), size, MPI_DOUBLE, processId - 1, 42, MPI_COMM_WORLD, &statL);
+                MPI_Recv(yPreviousPart.data(), size, MPI_DOUBLE, processId - 1, 42, MPI_COMM_WORLD, &statL);
         }
 
         for (int id = numberOfProcesses - 1; id > 0; id--)
         {
             if (processId == id)
-                MPI_Send(yPart.data() + size, size, MPI_DOUBLE, processId - 1, 41, MPI_COMM_WORLD);
+                MPI_Send(yPreviousPart.data() + size, size, MPI_DOUBLE, processId - 1, 41, MPI_COMM_WORLD);
 
             if (processId == id - 1)
-                MPI_Recv(yPart.data() + locationSize - size, size, MPI_DOUBLE, processId + 1, 41, MPI_COMM_WORLD, &statU);
+                MPI_Recv(yPreviousPart.data() + locationSize - size, size, MPI_DOUBLE, processId + 1, 41, MPI_COMM_WORLD, &statU);
         }
 
         for (int i = 1; i < locationSize / size - 1; ++i)
@@ -240,8 +240,6 @@ void jacobiV3(
 
     double timeStart;
     double timeEnd;
-    if (processId == 0)
-        timeStart = MPI_Wtime();
 
     std::vector<MPI_Request> reqInEven;
     std::vector<MPI_Request> reqOutEven;
@@ -295,6 +293,8 @@ void jacobiV3(
     std::vector<MPI_Status> statOutEven(nOutEven);
     std::vector<MPI_Status> statInOdd(nInOdd);
     std::vector<MPI_Status> statOutOdd(nOutOdd);
+    if (processId == 0)
+        timeStart = MPI_Wtime();
 
     do
     {

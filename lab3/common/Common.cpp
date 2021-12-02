@@ -112,9 +112,7 @@ void divideVectorBetweenProcesses(std::vector<double> &y,
 
     receiveDisplacement = (processId == 0) ? 0 : size;
 
-    logVectorDivision(processId,
-                      vectorPartSize,
-                      numbersOfProcessDataParts);
+    //logVectorDivision(processId,vectorPartSize,numbersOfProcessDataParts);
 
     //Send data from root process, page 41
     //This will send part of y to every process
@@ -153,12 +151,12 @@ void logVectorDivision(int processId,
 {
     std::cout << "\033[1;33mLOG DIVISION\033[0m" << std::endl;
     std::cout << "Process: " << processId << ", his part: " << vectorPartSize << std::endl;
-    /*if (processId == 0)
+    if (processId == 0)
     {
         for (int i = 0; i < numbersOfProcessDataParts.size(); i++)
         {
             std::cout << numbersOfProcessDataParts[i] << " ";
         }
         std::cout << std::endl;
-    }*/
+    }
 }

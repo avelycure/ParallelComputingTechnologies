@@ -7,7 +7,7 @@
 class InitialConditions
 {
 public:
-    int n = 64*16;
+    int n = 64 * 32 - 1;
     double leftBorder = 0.0;
     double rightBorder = 1.0;
     double h = (rightBorder - leftBorder) / n;
