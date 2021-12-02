@@ -12,7 +12,6 @@ void jacobiV1(
     int numberOfProcesses,
     int processId,
     double eps,
-    double &time,
     InitialConditions initialConditions);
 
 void jacobiV2(std::vector<double> &y,
@@ -22,7 +21,6 @@ void jacobiV2(std::vector<double> &y,
               int processesNumber,
               int processId,
               double eps,
-              double &time,
               InitialConditions initialConditions);
 
 
@@ -33,5 +31,4 @@ void jacobiV3(std::vector<double> &y,
               int processesNumber,
               int processId,
               double eps,
-              double &time,
               InitialConditions initialConditions);

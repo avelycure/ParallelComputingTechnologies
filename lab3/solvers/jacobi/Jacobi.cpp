@@ -12,7 +12,6 @@ void jacobiV1(
     int numberOfProcesses,
     int processId,
     double eps,
-    double &time,
     InitialConditions initialConditions)
 {
     int vectorPartSize;
@@ -62,12 +61,14 @@ void jacobiV1(
 
         yPreviousPart.swap(yPart);
 
-        // Block sending of data, page 12,16. Sends size * send1 elements to processId + 1 destination
+        // Block sending of data, page 12,16. Sends size *receive send1 elements to processId + 1 destination
+        // send and receive to destination
         MPI_Send(yPreviousPart.data() + vectorPartSize - 2 * size, size * send1, MPI_DOUBLE, destination, 56, MPI_COMM_WORLD);
         MPI_Recv(yPreviousPart.data(), size * recv1, MPI_DOUBLE, source, 56, MPI_COMM_WORLD, &statU);
         MPI_Send(yPreviousPart.data() + vectorPartSize - 2 * size, size * send2, MPI_DOUBLE, destination, 57, MPI_COMM_WORLD);
         MPI_Recv(yPreviousPart.data(), size * recv2, MPI_DOUBLE, source, 57, MPI_COMM_WORLD, &statU);
 
+        // send and receive to source
         MPI_Send(yPreviousPart.data() + size, size * recv2, MPI_DOUBLE, source, 65, MPI_COMM_WORLD);
         MPI_Recv(yPreviousPart.data() + vectorPartSize - size, size * send2, MPI_DOUBLE, destination, 65, MPI_COMM_WORLD, &statL);
         MPI_Send(yPreviousPart.data() + size, size * recv1, MPI_DOUBLE, source, 67, MPI_COMM_WORLD);
@@ -91,6 +92,7 @@ void jacobiV1(
     if (processId == 0)
         timeEnd = MPI_Wtime();
 
+    //page 40, gathers different number of data from array
     MPI_Gatherv(yPart.data() + receiveDisplacement, vectorPartSize - size - extraSize, MPI_DOUBLE, y.data(),
                 numbersOfProcessDataParts.data(), displacement.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
@@ -107,7 +109,6 @@ void jacobiV1(
         //    std::cout << "\n";
         //}
     }
-    time = timeEnd - timeStart;
 };
 
 /**
@@ -120,7 +121,6 @@ void jacobiV2(std::vector<double> &y,
               int processesNumber,
               int processId,
               double eps,
-              double &time,
               InitialConditions initialConditions)
 {
     int locationSize;
@@ -192,7 +192,8 @@ void jacobiV2(std::vector<double> &y,
     if (processId == 0)
         timeEnd = MPI_Wtime();
 
-    MPI_Gatherv(yPart.data() + receiveDisplacement, locationSize - size - extraSize, MPI_DOUBLE, y.data(), numbersOfProcessDataParts.data(), displacement.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(yPart.data() + receiveDisplacement, locationSize - size - extraSize, MPI_DOUBLE,
+                y.data(), numbersOfProcessDataParts.data(), displacement.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     if (processId == 0)
     {
@@ -201,8 +202,6 @@ void jacobiV2(std::vector<double> &y,
         std::cout << "Number of iterations: " << iterationsNumber << std::endl;
         std::cout << "Time: " << timeEnd - timeStart << std::endl;
     }
-
-    time = timeEnd - timeStart;
 };
 
 void jacobiV3(std::vector<double> &y,
@@ -212,7 +211,6 @@ void jacobiV3(std::vector<double> &y,
               int processesNumber,
               int processId,
               double eps,
-              double &time,
               InitialConditions initialConditions)
 {
     int locationSize;
@@ -268,7 +266,7 @@ void jacobiV3(std::vector<double> &y,
 
     if (processId != processesNumber - 1)
     {
-        // page 30, non blocking sending
+        // page 30, non blocking sending. Only creates requests not doing it
         MPI_Send_init(yPreviousPart.data() + locationSize - 2 * size, size, MPI_DOUBLE, processId + 1, 56, MPI_COMM_WORLD, reqOutEven.data() + nOutEven);
         MPI_Recv_init(yPreviousPart.data() + locationSize - size, size, MPI_DOUBLE, processId + 1, 65, MPI_COMM_WORLD, reqInEven.data() + nInEven);
         nOutEven++;
@@ -303,6 +301,7 @@ void jacobiV3(std::vector<double> &y,
 
         if (iterationsNumber % 2 != 0)
         {
+            //page 31
             MPI_Startall(nOutOdd, reqOutOdd.data());
             MPI_Startall(nInOdd, reqInOdd.data());
         }
@@ -365,6 +364,4 @@ void jacobiV3(std::vector<double> &y,
         std::cout << "Number of iterations: " << iterationsNumber << std::endl;
         std::cout << "Time: " << timeEnd - timeStart << std::endl;
     }
-
-    time = timeEnd - timeStart;
 }

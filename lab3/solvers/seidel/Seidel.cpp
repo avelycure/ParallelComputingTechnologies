@@ -7,7 +7,6 @@ void seidelV1(std::vector<double> &y,
               int processesNumber,
               int processId,
               double eps,
-              double &time,
               InitialConditions initialConditions)
 {
     int locationSize;
@@ -99,8 +98,6 @@ void seidelV1(std::vector<double> &y,
         std::cout << "Number of iterations: " << iterationsNumber << std::endl;
         std::cout << "Time: " << timeEnd - timeStart << std::endl;
     }
-
-    time = timeEnd - timeStart;
 }
 
 void seidelV2(std::vector<double> &y,
@@ -110,7 +107,6 @@ void seidelV2(std::vector<double> &y,
               int processesNumber,
               int processId,
               double eps,
-              double &time,
               InitialConditions initialConditions)
 {
     int location_size;
@@ -203,8 +199,6 @@ void seidelV2(std::vector<double> &y,
         std::cout << "Number of iterations: " << iterationsNumber << std::endl;
         std::cout << "Time: " << timeEnd - timeStart << std::endl;
     }
-
-    time = timeEnd - timeStart;
 }
 
 void seidelV3(std::vector<double> &y,
@@ -214,7 +208,6 @@ void seidelV3(std::vector<double> &y,
               int processesNumber,
               int processId,
               double eps,
-              double &time,
               InitialConditions initialConditions)
 {
     int locationSize;
@@ -445,6 +438,4 @@ void seidelV3(std::vector<double> &y,
         std::cout << "Number of iterations: " << iterationsNumber << std::endl;
         std::cout << "Time: " << timeEnd - timeStart << std::endl;
     }
-
-    time = timeEnd - timeStart;
 }

@@ -11,7 +11,6 @@ void seidelV1(std::vector<double> &y,
                         int processesNumber,
                         int processId,
                         double eps,
-                        double &time,
                         InitialConditions initialConditions);
 
 void seidelV2(std::vector<double> &y,
@@ -21,7 +20,6 @@ void seidelV2(std::vector<double> &y,
                         int processesNumber,
                         int processId,
                         double eps,
-                        double &time,
                         InitialConditions initialConditions);
 
 void seidelV3(std::vector<double> &y,
@@ -31,5 +29,4 @@ void seidelV3(std::vector<double> &y,
                         int processesNumber,
                         int processId,
                         double eps,
-                        double &time,
                         InitialConditions initialConditions);

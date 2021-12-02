@@ -44,6 +44,7 @@ void divideVectorBetweenProcesses(std::vector<double> &y,
                                   std::vector<int> &numbersOfProcessDataParts,
                                   //integer array of offsets in relation of y beginning, page 41
                                   std::vector<int> &displacement,
+                                  //size of part of y, belonging to each process
                                   int &vectorPartSize,
                                   //????what for
                                   int &receiveDisplacement,
@@ -112,7 +113,8 @@ void divideVectorBetweenProcesses(std::vector<double> &y,
 
     receiveDisplacement = (processId == 0) ? 0 : size;
 
-    //Send data from root process
+    //Send data from root process, page 41
+    //This will send part of y to every process
     MPI_Scatterv(y.data(),
                  numbersOfProcessDataParts.data(),
                  displacement.data(),
@@ -130,6 +132,10 @@ void fillVectorWithZeros(std::vector<double> &y)
         y[i] = 0.0;
 }
 
+/**
+ * Firstly we set to all even processes send - 1, receive - 0, for odd - on contrary.
+ * Then if id = np - 1 -> send - 0
+ * */
 void setInteractionsScheme(
     int processesNumber,
     const int processId,

@@ -27,7 +27,6 @@ int main(int argc, char **argv)
 
     if (processId == 0)
     {
-
         printLog(
             numberOfProcesses,
             initialCondition.n,
@@ -40,8 +39,6 @@ int main(int argc, char **argv)
         initialCondition.computeSolution(solution);
     }
 
-    double time;
-
     //Jacobi part
     // Synchronization, all processes will be blocked until end of the procedure
     MPI_Barrier(MPI_COMM_WORLD);
@@ -53,7 +50,6 @@ int main(int argc, char **argv)
              numberOfProcesses,
              processId,
              initialCondition.eps,
-             time,
              initialCondition);
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -64,7 +60,6 @@ int main(int argc, char **argv)
         numberOfProcesses,
         processId,
         initialCondition.eps,
-        time,
         initialCondition);
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -75,7 +70,6 @@ int main(int argc, char **argv)
         numberOfProcesses,
         processId,
         initialCondition.eps,
-        time,
         initialCondition);
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -86,7 +80,6 @@ int main(int argc, char **argv)
         numberOfProcesses,
         processId,
         initialCondition.eps,
-        time,
         initialCondition);
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -97,7 +90,6 @@ int main(int argc, char **argv)
         numberOfProcesses,
         processId,
         initialCondition.eps,
-        time,
         initialCondition);
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -108,7 +100,6 @@ int main(int argc, char **argv)
         numberOfProcesses,
         processId,
         initialCondition.eps,
-        time,
         initialCondition);
 
     MPI_Finalize();
