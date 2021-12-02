@@ -1,5 +1,6 @@
 #include "Main.hpp"
 
+//2.12
 int main(int argc, char **argv)
 {
     int processId;
@@ -27,7 +28,6 @@ int main(int argc, char **argv)
 
     if (processId == 0)
     {
-
         printLog(
             numberOfProcesses,
             initialCondition.n,
@@ -40,8 +40,6 @@ int main(int argc, char **argv)
         initialCondition.computeSolution(solution);
     }
 
-    double time;
-
     //Jacobi part
     // Synchronization, all processes will be blocked until end of the procedure
     MPI_Barrier(MPI_COMM_WORLD);
@@ -53,63 +51,68 @@ int main(int argc, char **argv)
              numberOfProcesses,
              processId,
              initialCondition.eps,
-             time,
-             initialCondition);
+             initialCondition,
+             solution);
 
     MPI_Barrier(MPI_COMM_WORLD);
     //Used methods: MPI_Sendrecv
-    jacobiV2(
-        y, initialCondition.h,
-        initialCondition.n + 1, initialCondition.kSquare,
-        numberOfProcesses,
-        processId,
-        initialCondition.eps,
-        time,
-        initialCondition);
+    jacobiV2(y,
+             initialCondition.h,
+             initialCondition.n + 1,
+             initialCondition.kSquare,
+             numberOfProcesses,
+             processId,
+             initialCondition.eps,
+             initialCondition,
+             solution);
 
     MPI_Barrier(MPI_COMM_WORLD);
     //Used methods: MPI_Send_init, MPI_Recv_init
-    jacobiV3(
-        y, initialCondition.h,
-        initialCondition.n + 1, initialCondition.kSquare,
-        numberOfProcesses,
-        processId,
-        initialCondition.eps,
-        time,
-        initialCondition);
+    jacobiV3(y,
+             initialCondition.h,
+             initialCondition.n + 1,
+             initialCondition.kSquare,
+             numberOfProcesses,
+             processId,
+             initialCondition.eps,
+             initialCondition,
+             solution);
 
     MPI_Barrier(MPI_COMM_WORLD);
     //Used methods: MPI_Send. MPI_Recv
-    seidelV1(
-        y, initialCondition.h,
-        initialCondition.n + 1, initialCondition.kSquare,
-        numberOfProcesses,
-        processId,
-        initialCondition.eps,
-        time,
-        initialCondition);
+    seidelV1(y,
+             initialCondition.h,
+             initialCondition.n + 1,
+             initialCondition.kSquare,
+             numberOfProcesses,
+             processId,
+             initialCondition.eps,
+             initialCondition,
+             solution);
 
     MPI_Barrier(MPI_COMM_WORLD);
     //Used methods: MPI_Sendrecv
-    seidelV2(
-        y, initialCondition.h,
-        initialCondition.n + 1, initialCondition.kSquare,
-        numberOfProcesses,
-        processId,
-        initialCondition.eps,
-        time,
-        initialCondition);
+    seidelV2(y,
+             initialCondition.h,
+             initialCondition.n + 1,
+             initialCondition.kSquare,
+             numberOfProcesses,
+             processId,
+             initialCondition.eps,
+             initialCondition,
+             solution);
 
     MPI_Barrier(MPI_COMM_WORLD);
     //Used methods: MPI_Send_init, MPI_Recv_init
-    seidelV3(
-        y, initialCondition.h,
-        initialCondition.n + 1, initialCondition.kSquare,
-        numberOfProcesses,
-        processId,
-        initialCondition.eps,
-        time,
-        initialCondition);
+    seidelV3(y,
+             initialCondition.h,
+             initialCondition.n + 1,
+             initialCondition.kSquare,
+             numberOfProcesses,
+             processId,
+             initialCondition.eps,
+             initialCondition,
+             solution);
 
     MPI_Finalize();
 }

@@ -7,14 +7,14 @@
 class InitialConditions
 {
 public:
-    int n = 128 * 16;
+    int n = 64 * 32 - 1;
     double leftBorder = 0.0;
     double rightBorder = 1.0;
     double h = (rightBorder - leftBorder) / n;
     double eps = 1e-8;
     double kSquare = 1.0;
 
-    const double PI = 3.1415;
+    const double PI = 3.14159265358979323846;
     const double PI_SQUARE = PI * PI;
 
     /**

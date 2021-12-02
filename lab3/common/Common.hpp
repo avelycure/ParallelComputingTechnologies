@@ -10,6 +10,10 @@ void printLog(
     double khRelation,
     double eps);
 
+void logVectorDivision(int processId,
+                       int vectorPartSize,
+                       std::vector<int> &numbersOfProcessDataParts);
+
 void divideVectorBetweenProcesses(std::vector<double> &y,
                                   double h,
                                   int size,
@@ -29,8 +33,5 @@ void divideVectorBetweenProcesses(std::vector<double> &y,
 double infiniteNorm(std::vector<double> &vec1, std::vector<double> &vec2, int begin, int end);
 
 void fillVectorWithZeros(std::vector<double> &y);
-
-void setInteractionsScheme(int processesNumber, int processId, int &dest, int &source, int &send1, int &recv1,
-                           int &send2, int &recv2);
 
 void setSourceAndDestination(int processesNumber, int processId, int &destination, int &source);
