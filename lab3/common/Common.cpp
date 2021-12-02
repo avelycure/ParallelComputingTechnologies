@@ -44,7 +44,7 @@ void divideVectorBetweenProcesses(std::vector<double> &y,
                                   std::vector<int> &numbersOfProcessDataParts,
                                   //integer array of offsets in relation of y beginning, page 41
                                   std::vector<int> &displacement,
-                                  //size of part of y, belonging to each process
+                                  //size of part of y, belonging to each process(locationSize)
                                   int &vectorPartSize,
                                   //????what for
                                   int &receiveDisplacement,
@@ -90,7 +90,6 @@ void divideVectorBetweenProcesses(std::vector<double> &y,
         fillVectorWithZeros(y);
     }
 
-    // may be this also handles cases when we have not equal parts of the matrix
     if (processesNumber > 1)
     {
         if ((processId == 0) || (processId == processesNumber - 1))
@@ -113,6 +112,10 @@ void divideVectorBetweenProcesses(std::vector<double> &y,
 
     receiveDisplacement = (processId == 0) ? 0 : size;
 
+    logVectorDivision(processId,
+                      vectorPartSize,
+                      numbersOfProcessDataParts);
+
     //Send data from root process, page 41
     //This will send part of y to every process
     MPI_Scatterv(y.data(),
@@ -132,50 +135,6 @@ void fillVectorWithZeros(std::vector<double> &y)
         y[i] = 0.0;
 }
 
-/**
- * Firstly we set to all even processes send - 1, receive - 0, for odd - on contrary.
- * Then if id = np - 1 -> send - 0
- * */
-void setInteractionsScheme(
-    int processesNumber,
-    const int processId,
-    int &destination,
-    int &source,
-    int &send1,
-    int &recv1,
-    int &send2,
-    int &recv2)
-{
-
-    setSourceAndDestination(processesNumber, processId, destination, source);
-
-    if (processId % 2 == 0)
-    {
-        send1 = 1;
-        recv1 = 0;
-    }
-    else
-    {
-        send1 = 0;
-        recv1 = 1;
-    }
-
-    if (processId == processesNumber - 1)
-        send1 = 0;
-
-    recv2 = send1;
-
-    if (processId == 0)
-        recv2 = 0;
-
-    if ((processId == processesNumber - 1) && (processesNumber % 2 != 0))
-        recv2 = 1;
-
-    send2 = recv1;
-    if ((processId == processesNumber - 1) && (processesNumber % 2 == 0))
-        send2 = 0;
-}
-
 void setSourceAndDestination(const int processesNumber, const int processId, int &destination, int &source)
 {
     destination = processId + 1;
@@ -186,4 +145,20 @@ void setSourceAndDestination(const int processesNumber, const int processId, int
         source = processesNumber - 1;
     else if (processId == processesNumber - 1)
         destination = 0;
+}
+
+void logVectorDivision(int processId,
+                       int vectorPartSize,
+                       std::vector<int> &numbersOfProcessDataParts)
+{
+    std::cout << "\033[1;33mLOG DIVISION\033[0m" << std::endl;
+    std::cout << "Process: " << processId << ", his part: " << vectorPartSize << std::endl;
+    /*if (processId == 0)
+    {
+        for (int i = 0; i < numbersOfProcessDataParts.size(); i++)
+        {
+            std::cout << numbersOfProcessDataParts[i] << " ";
+        }
+        std::cout << std::endl;
+    }*/
 }

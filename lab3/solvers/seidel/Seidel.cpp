@@ -27,7 +27,6 @@ void seidelV1(std::vector<double> &y,
     kSquare /= (h * h);
 
     int destination = 0, source = 0;
-    int send1 = 0, recv1 = 0, send2 = 0, recv2 = 0;
 
     double timeStart;
     double timeEnd;
@@ -37,7 +36,7 @@ void seidelV1(std::vector<double> &y,
                                  locationSize, receiveDisplace, extraSize, offset);
 
     if (numberOfProcesses > 1)
-        setInteractionsScheme(numberOfProcesses, processId, destination, source, send1, recv1, send2, recv2);
+        setSourceAndDestination(numberOfProcesses, processId, destination, source);
 
     if (processId == 0)
         timeStart = MPI_Wtime();
@@ -50,15 +49,23 @@ void seidelV1(std::vector<double> &y,
 
         MPI_Status statU, statL;
 
-        MPI_Send(yPreviousPart.data() + locationSize - 2 * size, size * send1, MPI_DOUBLE, destination, 56, MPI_COMM_WORLD);
-        MPI_Recv(yPreviousPart.data(), size * recv1, MPI_DOUBLE, source, 56, MPI_COMM_WORLD, &statU);
-        MPI_Send(yPreviousPart.data() + locationSize - 2 * size, size * send2, MPI_DOUBLE, destination, 57, MPI_COMM_WORLD);
-        MPI_Recv(yPreviousPart.data(), size * recv2, MPI_DOUBLE, source, 57, MPI_COMM_WORLD, &statU);
+        for (int id = 0; id < numberOfProcesses - 1; id++)
+        {
+            if (processId == id)
+                MPI_Send(yPart.data() + locationSize - 2 * size, size, MPI_DOUBLE, processId + 1, 42, MPI_COMM_WORLD);
 
-        MPI_Send(yPreviousPart.data() + size, size * recv2, MPI_DOUBLE, source, 65, MPI_COMM_WORLD);
-        MPI_Recv(yPreviousPart.data() + locationSize - size, size * send2, MPI_DOUBLE, destination, 65, MPI_COMM_WORLD, &statL);
-        MPI_Send(yPreviousPart.data() + size, size * recv1, MPI_DOUBLE, source, 67, MPI_COMM_WORLD);
-        MPI_Recv(yPreviousPart.data() + locationSize - size, size * send1, MPI_DOUBLE, destination, 67, MPI_COMM_WORLD, &statL);
+            if (processId == id + 1)
+                MPI_Recv(yPart.data(), size, MPI_DOUBLE, processId - 1, 42, MPI_COMM_WORLD, &statL);
+        }
+
+        for (int id = numberOfProcesses - 1; id > 0; id--)
+        {
+            if (processId == id)
+                MPI_Send(yPart.data() + size, size, MPI_DOUBLE, processId - 1, 41, MPI_COMM_WORLD);
+
+            if (processId == id - 1)
+                MPI_Recv(yPart.data() + locationSize - size, size, MPI_DOUBLE, processId + 1, 41, MPI_COMM_WORLD, &statU);
+        }
 
         for (int i = 1; i < locationSize / size - 1; ++i)
             for (int j = ((i + offset + 1) % 2) + 1; j < size - 1; j += 2)
@@ -68,15 +75,23 @@ void seidelV1(std::vector<double> &y,
                                            yPreviousPart[i * size + (j - 1)] +
                                            yPreviousPart[i * size + (j + 1)]);
 
-        MPI_Send(yPart.data() + locationSize - 2 * size, size * send1, MPI_DOUBLE, destination, 56, MPI_COMM_WORLD);
-        MPI_Recv(yPart.data(), size * recv1, MPI_DOUBLE, source, 56, MPI_COMM_WORLD, &statU);
-        MPI_Send(yPart.data() + locationSize - 2 * size, size * send2, MPI_DOUBLE, destination, 57, MPI_COMM_WORLD);
-        MPI_Recv(yPart.data(), size * recv2, MPI_DOUBLE, source, 57, MPI_COMM_WORLD, &statU);
+        for (int id = 0; id < numberOfProcesses - 1; id++)
+        {
+            if (processId == id)
+                MPI_Send(yPart.data() + locationSize - 2 * size, size, MPI_DOUBLE, processId + 1, 42, MPI_COMM_WORLD);
 
-        MPI_Send(yPart.data() + size, size * recv2, MPI_DOUBLE, source, 65, MPI_COMM_WORLD);
-        MPI_Recv(yPart.data() + locationSize - size, size * send2, MPI_DOUBLE, destination, 65, MPI_COMM_WORLD, &statL);
-        MPI_Send(yPart.data() + size, size * recv1, MPI_DOUBLE, source, 67, MPI_COMM_WORLD);
-        MPI_Recv(yPart.data() + locationSize - size, size * send1, MPI_DOUBLE, destination, 67, MPI_COMM_WORLD, &statL);
+            if (processId == id + 1)
+                MPI_Recv(yPart.data(), size, MPI_DOUBLE, processId - 1, 42, MPI_COMM_WORLD, &statL);
+        }
+
+        for (int id = numberOfProcesses - 1; id > 0; id--)
+        {
+            if (processId == id)
+                MPI_Send(yPart.data() + size, size, MPI_DOUBLE, processId - 1, 41, MPI_COMM_WORLD);
+
+            if (processId == id - 1)
+                MPI_Recv(yPart.data() + locationSize - size, size, MPI_DOUBLE, processId + 1, 41, MPI_COMM_WORLD, &statU);
+        }
 
         for (int i = 1; i < locationSize / size - 1; ++i)
             for (int j = ((i + offset) % 2) + 1; j < size - 1; j += 2)
