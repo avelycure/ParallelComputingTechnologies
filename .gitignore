@@ -36,7 +36,3 @@
 
 # Object files
 *.out
-
-# Libs
-/libs
-
