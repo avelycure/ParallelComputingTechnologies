@@ -13,13 +13,13 @@ void printLog(
     std::cout << "eps = " << eps << std::endl;
 }
 
-double infiniteNorm(std::vector<double> &vec1, std::vector<double> &vec2, int begin, int end)
+double infiniteNorm(std::vector<double> &x, std::vector<double> &y, int begin, int end)
 {
     double norm = 0.0;
     double elem = 0.0;
     for (int i = begin; i < end; ++i)
     {
-        elem = fabs(vec1[i] - vec2[i]);
+        elem = fabs(x[i] - y[i]);
         if (norm < elem)
             norm = elem;
     }
@@ -46,7 +46,6 @@ void divideVectorBetweenProcesses(std::vector<double> &y,
                                   std::vector<int> &displacement,
                                   //size of part of y, belonging to each process(locationSize)
                                   int &vectorPartSize,
-                                  //????what for
                                   int &receiveDisplacement,
                                   int &extraSize,
                                   int &offset)
@@ -111,8 +110,6 @@ void divideVectorBetweenProcesses(std::vector<double> &y,
     partOfRightPart.resize(vectorPartSize);
 
     receiveDisplacement = (processId == 0) ? 0 : size;
-
-    //logVectorDivision(processId,vectorPartSize,numbersOfProcessDataParts);
 
     //Send data from root process, page 41
     //This will send part of y to every process

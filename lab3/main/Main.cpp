@@ -1,6 +1,5 @@
 #include "Main.hpp"
 
-//2.12
 int main(int argc, char **argv)
 {
     int processId;
@@ -57,18 +56,6 @@ int main(int argc, char **argv)
     MPI_Barrier(MPI_COMM_WORLD);
     //Used methods: MPI_Sendrecv
     jacobiV2(y,
-             initialCondition.h,
-             initialCondition.n + 1,
-             initialCondition.kSquare,
-             numberOfProcesses,
-             processId,
-             initialCondition.eps,
-             initialCondition,
-             solution);
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    //Used methods: MPI_Send_init, MPI_Recv_init
-    jacobiV3(y,
              initialCondition.h,
              initialCondition.n + 1,
              initialCondition.kSquare,
