@@ -3,7 +3,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include "../../mpi.h"
+#include "mpi.h"
 #include "../../common/Common.hpp"
 #include "../../init_conds/InitialConditions.hpp"
 const double PI = 3.14159265358979323846;
