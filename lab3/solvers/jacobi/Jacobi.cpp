@@ -46,12 +46,12 @@ void jacobiV1(
         timeStart = MPI_Wtime();
 
     do
-    {
+    { 
+
         iterationsNumber++;
 
         yPreviousPart.swap(yPart);
 
-        //send data 0 -> 1, receive in 1
         for (int id = 0; id < numberOfProcesses - 1; id++)
         {
             if (processId == id)
@@ -61,8 +61,7 @@ void jacobiV1(
                 MPI_Recv(yPreviousPart.data(), size, MPI_DOUBLE, processId - 1, 42, MPI_COMM_WORLD, &statL);
         }
 
-        // receive data from 1 to 0
-        for (int id = numberOfProcesses - 1; id > 0; id--)
+         for (int id = numberOfProcesses - 1; id > 0; id--)
         {
             if (processId == id)
                 MPI_Send(yPreviousPart.data() + size, size, MPI_DOUBLE, processId - 1, 41, MPI_COMM_WORLD);
