@@ -46,7 +46,7 @@ void jacobiV1(
         timeStart = MPI_Wtime();
 
     do
-    { 
+    {
 
         iterationsNumber++;
 
@@ -61,7 +61,7 @@ void jacobiV1(
                 MPI_Recv(yPreviousPart.data(), size, MPI_DOUBLE, processId - 1, 42, MPI_COMM_WORLD, &statL);
         }
 
-         for (int id = numberOfProcesses - 1; id > 0; id--)
+        for (int id = numberOfProcesses - 1; id > 0; id--)
         {
             if (processId == id)
                 MPI_Send(yPreviousPart.data() + size, size, MPI_DOUBLE, processId - 1, 41, MPI_COMM_WORLD);
@@ -174,6 +174,135 @@ void jacobiV2(std::vector<double> &y,
                                            yPreviousPart[(i + 1) * size + j] +
                                            yPreviousPart[i * size + (j - 1)] +
                                            yPreviousPart[i * size + (j + 1)]);
+
+        norm = infiniteNorm(yPart, yPreviousPart, size, locationSize - size);
+
+        MPI_Allreduce(&norm, &finalNorm, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+
+    } while (finalNorm > eps);
+
+    if (processId == 0)
+        timeEnd = MPI_Wtime();
+
+    MPI_Gatherv(yPart.data() + receiveDisplacement, locationSize - size - extraSize, MPI_DOUBLE,
+                y.data(), numbersOfProcessDataParts.data(), displacement.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    if (processId == 0)
+    {
+        std::cout << "\033[1;32mJacobi. MPI_Sendrecv\033[0m" << std::endl;
+        std::cout << "Substraction norm: " << finalNorm << std::endl;
+        std::cout << "Number of iterations: " << iterationsNumber << std::endl;
+        std::cout << "Time: " << timeEnd - timeStart << std::endl;
+        double differenceWithAccurateSolution = infiniteNorm(y, solution, 0, y.size());
+        std::cout << "Diffrence: " << differenceWithAccurateSolution << std::endl;
+    }
+};
+
+void jacobiV3(std::vector<double> &y,
+               double h,
+               int size,
+               double kSquare,
+               int numberOfProcesses,
+               int processId,
+               double eps,
+               InitialConditions initialConditions,
+               std::vector<double> &solution)
+{
+    int locationSize;
+    int receiveDisplacement;
+    int extraSize;
+    int offset;
+
+    std::vector<double> rightPart;
+    std::vector<int> numbersOfProcessDataParts;
+    std::vector<int> displacement;
+    std::vector<double> yPart;
+    std::vector<double> yPreviousPart;
+    std::vector<double> partOfRightPart;
+
+    int iterationsNumber = 0;
+    double norm;
+    double finalNorm;
+
+    std::vector<MPI_Request> reqB, reqA;
+    if ((processId == 0) || (processId == numberOfProcesses - 1))
+    {
+        reqB.resize(1);
+        reqA.resize(1);
+    }
+    else
+    {
+        reqB.resize(2);
+        reqA.resize(2);
+    }
+    int nB = 0, nA = 0;
+
+    double c = 1.0 / (4.0 + kSquare);
+    kSquare /= (h * h);
+
+    int sendCount = (processId - (numberOfProcesses - 1)) ? size : 0;
+    int receiveCount = processId ? size : 0;
+
+    double timeStart;
+    double timeEnd;
+
+    divideVectorBetweenProcesses(y, h, size, kSquare, numberOfProcesses, processId, yPart, yPreviousPart, partOfRightPart, numbersOfProcessDataParts, displacement,
+                                 locationSize, receiveDisplacement, extraSize, offset);
+
+    if (processId != numberOfProcesses - 1)
+    {
+        MPI_Send_init(yPreviousPart.data() + locationSize - 2 * size, size, MPI_DOUBLE, processId + 1, 42, MPI_COMM_WORLD, reqA.data() + nA);
+        MPI_Recv_init(yPreviousPart.data() + locationSize - size, size, MPI_DOUBLE, processId + 1, 41, MPI_COMM_WORLD, reqB.data() + nB);
+        nA++;
+        nB++;
+    }
+    if (processId != 0)
+    {
+        MPI_Recv_init(yPreviousPart.data(), size, MPI_DOUBLE, processId - 1, 42, MPI_COMM_WORLD, reqA.data() + nA);
+        MPI_Send_init(yPreviousPart.data() + size, size, MPI_DOUBLE, processId - 1, 41, MPI_COMM_WORLD, reqB.data() + nB);
+        nA++;
+        nB++;
+    }
+
+    std::vector<MPI_Status> statB(nB), statA(nA);
+
+    if (processId == 0)
+        timeStart = MPI_Wtime();
+
+    do
+    {
+        iterationsNumber++;
+
+        yPreviousPart.swap(yPart);
+
+        MPI_Status statU, statL;
+
+        MPI_Startall(nA, reqA.data());
+        MPI_Startall(nB, reqB.data());
+
+        for (int i = 1; i < locationSize / size - 1; ++i)
+            for (int j = 1; j < size - 1; ++j)
+                yPart[i * size + j] = c * (h * h * initialConditions.f((i + offset) * h, j * h, kSquare) + yPreviousPart[(i - 1) * size + j] +
+                                           yPreviousPart[(i + 1) * size + j] +
+                                           yPreviousPart[i * size + (j - 1)] +
+                                           yPreviousPart[i * size + (j + 1)]);
+
+        MPI_Waitall(nB, reqB.data(), statB.data());
+        MPI_Waitall(nA, reqA.data(), statA.data());
+
+        int i = 1;
+        for (int j = 1; j < size - 1; j++)
+            yPart[i * size + j] = c * (h * h * initialConditions.f((i + offset) * h, j * h, kSquare) + yPreviousPart[(i - 1) * size + j] +
+                                       yPreviousPart[(i + 1) * size + j] +
+                                       yPreviousPart[i * size + (j - 1)] +
+                                       yPreviousPart[i * size + (j + 1)]);
+
+        i = locationSize / size - 2;
+        for (int j = 1; j < size - 1; j++)
+            yPart[i * size + j] = c * (h * h * initialConditions.f((i + offset) * h, j * h, kSquare) + yPreviousPart[(i - 1) * size + j] +
+                                       yPreviousPart[(i + 1) * size + j] +
+                                       yPreviousPart[i * size + (j - 1)] +
+                                       yPreviousPart[i * size + (j + 1)]);
 
         norm = infiniteNorm(yPart, yPreviousPart, size, locationSize - size);
 

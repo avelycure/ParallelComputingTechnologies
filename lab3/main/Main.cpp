@@ -66,6 +66,17 @@ int main(int argc, char **argv)
              solution);
 
     MPI_Barrier(MPI_COMM_WORLD);
+    jacobiV3(y,
+             initialCondition.h,
+             initialCondition.n + 1,
+             initialCondition.kSquare,
+             numberOfProcesses,
+             processId,
+             initialCondition.eps,
+             initialCondition,
+             solution);
+
+    MPI_Barrier(MPI_COMM_WORLD);
     //Used methods: MPI_Send. MPI_Recv
     seidelV1(y,
              initialCondition.h,
