@@ -8,7 +8,7 @@ class InitialConditions
 {
 public:
     //Number of nodes
-    int n = 64 * 16;
+    int n = 4;
 
     //Number of fragments is n - 1
     double h = (rightBorder - leftBorder) / (n - 1);

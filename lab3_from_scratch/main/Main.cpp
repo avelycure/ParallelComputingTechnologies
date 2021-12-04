@@ -24,20 +24,25 @@ int main(int argc, char **argv)
     //get process name and lenght of process name
     MPI_Get_processor_name(processorName, &processorNameLength);
 
-    InitialConditions initialCondition = InitialConditions();
+    InitialConditions initialConditions = InitialConditions();
 
     if (processId == 0)
     {
         printLog(
             numberOfProcesses,
-            initialCondition.n,
-            initialCondition.epsilon);
+            initialConditions.n,
+            initialConditions.epsilon);
 
-        y.resize((initialCondition.n) * (initialCondition.n));
-        solution.resize((initialCondition.n) * (initialCondition.n));
+        y.resize((initialConditions.n) * (initialConditions.n));
+        solution.resize((initialConditions.n) * (initialConditions.n));
 
-        initialCondition.computeSolution(solution);
+        initialConditions.computeSolution(solution);
     }
+
+    jacobiV1(y,
+             initialConditions,
+             numberOfProcesses,
+             processId);
 
     MPI_Finalize();
 }
