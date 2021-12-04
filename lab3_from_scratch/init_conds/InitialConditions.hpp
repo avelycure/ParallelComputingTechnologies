@@ -1,4 +1,5 @@
 #include <vector>
+#include <cmath>
 #pragma once
 
 /**
@@ -8,15 +9,15 @@ class InitialConditions
 {
 public:
     //Number of nodes
-    int n = 4;
-
-    //Number of fragments is n - 1
-    double h = (rightBorder - leftBorder) / (n - 1);
-
-    double epsilon = 1e-8;
+    int n = 128;
 
     double leftBorder = 0.0;
     double rightBorder = 1.0;
+
+    //Number of fragments is n - 1
+    double h = (rightBorder - leftBorder) / (n - 1.0);
+
+    double epsilon = 1e-8;
 
     //Equation parameter
     //For studing purposes made it depending from h

@@ -2,7 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
-#include "mpi.h"
+#include "../../mpi.h"
 #include "../init_conds/InitialConditions.hpp"
 
 void printLog(
@@ -21,6 +21,8 @@ void divideResponsibilities(
     int &localDisplacement,
     int &localRows,
     int &localOffsetInRows,
+    std::vector<int> &processesLocationSizes,
+    std::vector<int> &processesDisplacement,
     InitialConditions initialConditions);
 
 void printProcessLocations(int numberOfProcesses,
@@ -36,6 +38,9 @@ void init(
     std::vector<double> &y,
     std::vector<double> &yLocal,
     std::vector<double> &yLocalPrevious,
+    std::vector<double> &yLocalHighBorder,
+    std::vector<double> &yLocalLowBorder,
+    InitialConditions initialConditions,
     int localSize);
 
 void setUpLocations(std::vector<int> &processesLocationSizes,
@@ -52,6 +57,7 @@ void printProcessData(
     int localSize,
     int localDisplacement,
     int localRows,
+    int localOffsetInRows,
     bool isDebugMode);
 
 void printMethodStatistic(
@@ -62,4 +68,4 @@ void printMethodStatistic(
     double differenceWithAnalyticSolution,
     bool isDebugMode);
 
-double infiniteNorm(std::vector<double> &x, std::vector<double> &y, int begin, int end);
+double infiniteNorm(std::vector<double> &x, std::vector<double> &y);

@@ -22,6 +22,7 @@ void printProcessData(
     int localSize,
     int localDisplacement,
     int localRows,
+    int localOffsetInRows,
     bool isDebugMode)
 {
     if (isDebugMode)
@@ -30,6 +31,7 @@ void printProcessData(
         std::cout << "Process id: " << processId << std::endl;
         std::cout << "Local size: " << localSize << std::endl;
         std::cout << "Local rows: " << localRows << std::endl;
+        std::cout << "Rows offset: " << localOffsetInRows << std::endl;
         std::cout << "Local displacement: " << localDisplacement << std::endl;
         std::cout << "yLocal size: " << yLocal.size() << std::endl;
         std::cout << "yLocalPrevious size: " << yLocalPrevious.size() << std::endl;
@@ -52,12 +54,10 @@ void divideResponsibilities(
     int &localDisplacement,
     int &localRows,
     int &localOffsetInRows,
+    std::vector<int> &processesLocationSizes,
+    std::vector<int> &processesDisplacement,
     InitialConditions initialConditions)
 {
-    //@processesLocationSizes stores data about number of nodes which belongs to each process
-    std::vector<int> processesLocationSizes;
-    //@processesLocationSizes stores data about displacement from the beginning of y
-    std::vector<int> processesDisplacement;
     //@processesLocalRows stores data about number of rows in part of every process
     std::vector<int> processesLocalRows;
     //@processesOffsetInRows stores data about offset in rows from the beginning of our solution
@@ -88,13 +88,25 @@ void init(
     std::vector<double> &y,
     std::vector<double> &yLocal,
     std::vector<double> &yLocalPrevious,
+    std::vector<double> &yLocalHighBorder,
+    std::vector<double> &yLocalLowBorder,
+    InitialConditions initialConditions,
     int localSize)
 {
     if (processId == 0)
         fillVectorWithZeros(y);
 
     yLocal.resize(localSize);
+    fillVectorWithZeros(yLocal);
+
     yLocalPrevious.resize(localSize);
+    fillVectorWithZeros(yLocalPrevious);
+
+    yLocalHighBorder.resize(initialConditions.n);
+    fillVectorWithZeros(yLocalHighBorder);
+
+    yLocalLowBorder.resize(initialConditions.n);
+    fillVectorWithZeros(yLocalLowBorder);
 }
 
 void fillVectorWithZeros(std::vector<double> &x)
@@ -186,16 +198,16 @@ void printMethodStatistic(
     {
         std::cout << "\033[1;32mJacobi. MPI_Send. MPI_Recv\033[0m" << std::endl;
         std::cout << "Time: " << timeEnd - timeStart << std::endl;
-        std::cout << "Difference: " << differenceWithAnalyticSolution << std::endl;
+        //std::cout << "Difference: " << differenceWithAnalyticSolution << std::endl;
         std::cout << "Number of iterations: " << iterationsNumber << std::endl;
     }
 }
 
-double infiniteNorm(std::vector<double> &x, std::vector<double> &y, int begin, int end)
+double infiniteNorm(std::vector<double> &x, std::vector<double> &y)
 {
     double norm = 0.0;
     double elem = 0.0;
-    for (int i = begin; i < end; ++i)
+    for (int i = 0; i < x.size(); i++)
     {
         elem = fabs(x[i] - y[i]);
         if (norm < elem)
