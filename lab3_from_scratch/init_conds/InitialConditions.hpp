@@ -27,6 +27,9 @@ public:
     //Pi square
     const double PI2 = PI * PI;
 
+    //Enable/disable debug information
+    bool isDebugMode = true;
+
     /**
      * Right part of equation
      * */

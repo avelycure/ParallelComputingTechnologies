@@ -8,13 +8,37 @@
 void printLog(
     int numberOfProcesses,
     int sumSize,
-    double eps);
+    double epsilon,
+    bool isDebugMode);
 
 void divideResponsibilities(
     std::vector<double> &y,
-    std::vector<double> &yPart,
+    std::vector<double> &yLocal,
+    std::vector<double> &yLocalPrevious,
     int numberOfProcesses,
     int processId,
-    int &locationSize,
-    int &displacement,
+    int &localSize,
+    int &localDisplacement,
     InitialConditions initialConditions);
+
+void fillVectorWithZeros(std::vector<double> &y);
+
+void init(
+    int processId,
+    std::vector<double> &y,
+    std::vector<double> &yLocal,
+    std::vector<double> &yLocalPrevious,
+    int localSize);
+
+void setUpLocations(std::vector<int> &processesLocationSizes,
+                    std::vector<int> &processesDisplacement,
+                    int numberOfProcesses,
+                    InitialConditions initialConditions);
+
+void printProcessData(
+    std::vector<double> yLocal,
+    std::vector<double> yLocalPrevious,
+    int processId,
+    int localSize,
+    int localDisplacement,
+    bool isDebugMode);

@@ -31,7 +31,8 @@ int main(int argc, char **argv)
         printLog(
             numberOfProcesses,
             initialConditions.n,
-            initialConditions.epsilon);
+            initialConditions.epsilon,
+            initialConditions.isDebugMode);
 
         y.resize((initialConditions.n) * (initialConditions.n));
         solution.resize((initialConditions.n) * (initialConditions.n));

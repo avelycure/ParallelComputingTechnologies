@@ -10,10 +10,10 @@ void jacobiV1(
     int processId)
 {
     //Number of nodes in the process domain after division between processes
-    int locationSize;
+    int localSize;
 
     //Displacement in relation with beginning of the result vector
-    int displacement;
+    int localDisplacement;
 
     //Norm on current iteration
     double currentNorm;
@@ -21,14 +21,28 @@ void jacobiV1(
     double previousNorm;
 
     //Part of the solution, here is situated part with which every process works
-    std::vector<double> yPart;
+    std::vector<double> yLocal;
+    std::vector<double> yLocalPrevious;
 
-    divideResponsibilities(
-        y,
-        yPart,
-        numberOfProcesses,
-        processId,
-        locationSize,
-        displacement,
-        initialConditions);
+    divideResponsibilities(y,
+                           yLocal,
+                           yLocalPrevious,
+                           numberOfProcesses,
+                           processId,
+                           localSize,
+                           localDisplacement,
+                           initialConditions);
+
+    init(processId,
+         y,
+         yLocal,
+         yLocalPrevious,
+         localSize);
+
+    printProcessData(yLocal,
+                     yLocalPrevious,
+                     processId,
+                     localSize,
+                     localDisplacement,
+                     initialConditions.isDebugMode);
 }
