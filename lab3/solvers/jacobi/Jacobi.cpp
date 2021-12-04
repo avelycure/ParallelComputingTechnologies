@@ -199,14 +199,14 @@ void jacobiV2(std::vector<double> &y,
 };
 
 void jacobiV3(std::vector<double> &y,
-               double h,
-               int size,
-               double kSquare,
-               int numberOfProcesses,
-               int processId,
-               double eps,
-               InitialConditions initialConditions,
-               std::vector<double> &solution)
+              double h,
+              int size,
+              double kSquare,
+              int numberOfProcesses,
+              int processId,
+              double eps,
+              InitialConditions initialConditions,
+              std::vector<double> &solution)
 {
     int locationSize;
     int receiveDisplacement;
@@ -224,6 +224,10 @@ void jacobiV3(std::vector<double> &y,
     double norm;
     double finalNorm;
 
+    divideVectorBetweenProcesses(y, h, size, kSquare, numberOfProcesses, processId, yPart,
+                                 yPreviousPart, partOfRightPart, numbersOfProcessDataParts,
+                                 displacement, locationSize, receiveDisplacement, extraSize, offset);
+
     std::vector<MPI_Request> reqB, reqA;
     if ((processId == 0) || (processId == numberOfProcesses - 1))
     {
@@ -240,26 +244,24 @@ void jacobiV3(std::vector<double> &y,
     double c = 1.0 / (4.0 + kSquare);
     kSquare /= (h * h);
 
-    int sendCount = (processId - (numberOfProcesses - 1)) ? size : 0;
-    int receiveCount = processId ? size : 0;
-
     double timeStart;
     double timeEnd;
 
-    divideVectorBetweenProcesses(y, h, size, kSquare, numberOfProcesses, processId, yPart, yPreviousPart, partOfRightPart, numbersOfProcessDataParts, displacement,
-                                 locationSize, receiveDisplacement, extraSize, offset);
-
     if (processId != numberOfProcesses - 1)
     {
-        MPI_Send_init(yPreviousPart.data() + locationSize - 2 * size, size, MPI_DOUBLE, processId + 1, 42, MPI_COMM_WORLD, reqA.data() + nA);
-        MPI_Recv_init(yPreviousPart.data() + locationSize - size, size, MPI_DOUBLE, processId + 1, 41, MPI_COMM_WORLD, reqB.data() + nB);
+        MPI_Send_init(yPreviousPart.data() + locationSize - 2 * size, size,
+                      MPI_DOUBLE, processId + 1, 42, MPI_COMM_WORLD, reqA.data() + nA);
+        MPI_Recv_init(yPreviousPart.data() + locationSize - size, size,
+                      MPI_DOUBLE, processId + 1, 41, MPI_COMM_WORLD, reqB.data() + nB);
         nA++;
         nB++;
     }
     if (processId != 0)
     {
-        MPI_Recv_init(yPreviousPart.data(), size, MPI_DOUBLE, processId - 1, 42, MPI_COMM_WORLD, reqA.data() + nA);
-        MPI_Send_init(yPreviousPart.data() + size, size, MPI_DOUBLE, processId - 1, 41, MPI_COMM_WORLD, reqB.data() + nB);
+        MPI_Recv_init(yPreviousPart.data(), size, MPI_DOUBLE, processId - 1,
+                      42, MPI_COMM_WORLD, reqA.data() + nA);
+        MPI_Send_init(yPreviousPart.data() + size, size, MPI_DOUBLE, processId - 1,
+                      41, MPI_COMM_WORLD, reqB.data() + nB);
         nA++;
         nB++;
     }
@@ -282,7 +284,8 @@ void jacobiV3(std::vector<double> &y,
 
         for (int i = 1; i < locationSize / size - 1; ++i)
             for (int j = 1; j < size - 1; ++j)
-                yPart[i * size + j] = c * (h * h * initialConditions.f((i + offset) * h, j * h, kSquare) + yPreviousPart[(i - 1) * size + j] +
+                yPart[i * size + j] = c * (h * h * initialConditions.f((i + offset) * h, j * h, kSquare) +
+                                           yPreviousPart[(i - 1) * size + j] +
                                            yPreviousPart[(i + 1) * size + j] +
                                            yPreviousPart[i * size + (j - 1)] +
                                            yPreviousPart[i * size + (j + 1)]);
@@ -292,14 +295,16 @@ void jacobiV3(std::vector<double> &y,
 
         int i = 1;
         for (int j = 1; j < size - 1; j++)
-            yPart[i * size + j] = c * (h * h * initialConditions.f((i + offset) * h, j * h, kSquare) + yPreviousPart[(i - 1) * size + j] +
+            yPart[i * size + j] = c * (h * h * initialConditions.f((i + offset) * h, j * h, kSquare) +
+                                       yPreviousPart[(i - 1) * size + j] +
                                        yPreviousPart[(i + 1) * size + j] +
                                        yPreviousPart[i * size + (j - 1)] +
                                        yPreviousPart[i * size + (j + 1)]);
 
         i = locationSize / size - 2;
         for (int j = 1; j < size - 1; j++)
-            yPart[i * size + j] = c * (h * h * initialConditions.f((i + offset) * h, j * h, kSquare) + yPreviousPart[(i - 1) * size + j] +
+            yPart[i * size + j] = c * (h * h * initialConditions.f((i + offset) * h, j * h, kSquare) +
+                                       yPreviousPart[(i - 1) * size + j] +
                                        yPreviousPart[(i + 1) * size + j] +
                                        yPreviousPart[i * size + (j - 1)] +
                                        yPreviousPart[i * size + (j + 1)]);
@@ -307,7 +312,7 @@ void jacobiV3(std::vector<double> &y,
         norm = infiniteNorm(yPart, yPreviousPart, size, locationSize - size);
 
         MPI_Allreduce(&norm, &finalNorm, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-
+        std::cout << finalNorm << std::endl;
     } while (finalNorm > eps);
 
     if (processId == 0)
