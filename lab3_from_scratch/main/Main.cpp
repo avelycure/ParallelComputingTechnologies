@@ -10,6 +10,7 @@ int main(int argc, char **argv)
     int processorNameLength;
 
     vector<double> y;
+    //Analytic solution of the equation
     vector<double> solution;
 
     MPI_Init(&argc, &argv);
@@ -30,11 +31,10 @@ int main(int argc, char **argv)
         printLog(
             numberOfProcesses,
             initialCondition.n,
-            initialCondition.kSquare / (initialCondition.h * initialCondition.h),
-            initialCondition.eps);
+            initialCondition.epsilon);
 
-        y.resize((initialCondition.n + 1) * (initialCondition.n + 1));
-        solution.resize((initialCondition.n + 1) * (initialCondition.n + 1));
+        y.resize((initialCondition.n) * (initialCondition.n));
+        solution.resize((initialCondition.n) * (initialCondition.n));
 
         initialCondition.computeSolution(solution);
     }
