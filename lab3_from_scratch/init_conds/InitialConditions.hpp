@@ -33,7 +33,7 @@ public:
     /**
      * Right part of equation
      * */
-    double f(double x, double y, double k)
+    double f(double x, double y)
     {
         return sin(PI * y) * (2.0 + (k * k + PI2) * (1.0 - x) * x);
     }

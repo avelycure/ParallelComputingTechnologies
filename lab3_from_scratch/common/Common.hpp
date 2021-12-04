@@ -19,7 +19,15 @@ void divideResponsibilities(
     int processId,
     int &localSize,
     int &localDisplacement,
+    int &localRows,
+    int &localOffsetInRows,
     InitialConditions initialConditions);
+
+void printProcessLocations(int numberOfProcesses,
+                           std::vector<int> processesDisplacement,
+                           std::vector<int> processesLocalRows,
+                           std::vector<int> &processesOffsetInRows,
+                           bool isDebugMode);
 
 void fillVectorWithZeros(std::vector<double> &y);
 
@@ -32,6 +40,8 @@ void init(
 
 void setUpLocations(std::vector<int> &processesLocationSizes,
                     std::vector<int> &processesDisplacement,
+                    std::vector<int> &processesLocalRows,
+                    std::vector<int> &processesOffsetInRows,
                     int numberOfProcesses,
                     InitialConditions initialConditions);
 
@@ -41,4 +51,15 @@ void printProcessData(
     int processId,
     int localSize,
     int localDisplacement,
+    int localRows,
     bool isDebugMode);
+
+void printMethodStatistic(
+    int finalNorm,
+    int iterationsNumber,
+    double timeStart,
+    double timeEnd,
+    double differenceWithAnalyticSolution,
+    bool isDebugMode);
+
+double infiniteNorm(std::vector<double> &x, std::vector<double> &y, int begin, int end);
