@@ -2,7 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
-#include "../../mpi.h"
+#include "mpi.h"
 #include "../init_conds/InitialConditions.hpp"
 
 void printLog(
