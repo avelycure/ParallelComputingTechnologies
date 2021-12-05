@@ -9,26 +9,29 @@ void seidelV1(std::vector<double> &y,
               int numberOfProcesses,
               int processId);
 
-void solveRed(
-    std::vector<double> &yLocal,
-    std::vector<double> &yLocalPrevious,
-    std::vector<double> &yLocalPreviousUpHighBorder,
-    std::vector<double> &yLocalPreviousDownLowBorder,
-    int numberOfProcesses,
-    int processId,
-    int localRows,
-    int localSize,
-    int localOffsetInRows,
-    InitialConditions initialConditions);
+void seidelV2(std::vector<double> &y,
+              InitialConditions initialConditions,
+              int numberOfProcesses,
+              int processId);
 
-void solveBlack(
-    std::vector<double> &yLocal,
-    std::vector<double> &yLocalPrevious,
-    std::vector<double> &yLocalPreviousUpHighBorder,
-    std::vector<double> &yLocalPreviousDownLowBorder,
-    int numberOfProcesses,
-    int processId,
-    int localRows,
-    int localSize,
-    int localOffsetInRows,
-    InitialConditions initialConditions);
+void solveRed(std::vector<double> &yLocal,
+              std::vector<double> &yLocalPrevious,
+              std::vector<double> &yLocalPreviousUpHighBorder,
+              std::vector<double> &yLocalPreviousDownLowBorder,
+              int numberOfProcesses,
+              int processId,
+              int localRows,
+              int localSize,
+              int localOffsetInRows,
+              InitialConditions initialConditions);
+
+void solveBlack(std::vector<double> &yLocal,
+                std::vector<double> &yLocalPrevious,
+                std::vector<double> &yLocalPreviousUpHighBorder,
+                std::vector<double> &yLocalPreviousDownLowBorder,
+                int numberOfProcesses,
+                int processId,
+                int localRows,
+                int localSize,
+                int localOffsetInRows,
+                InitialConditions initialConditions);

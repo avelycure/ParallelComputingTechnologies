@@ -19,21 +19,6 @@ void jacobiV3(std::vector<double> &y,
               int numberOfProcesses,
               int processId);
 
-void exchangeDataV2(std::vector<double> &yLocal,
-                    std::vector<double> &yLocalPrevious,
-                    std::vector<double> &yLocalPreviousUpHighBorder,
-                    std::vector<double> &yLocalPreviousDownLowBorder,
-                    std::vector<double> &buf1,
-                    std::vector<double> &buf2,
-                    int numberOfProcesses,
-                    int processId,
-                    InitialConditions initialConditions);
-
-void setSourceAndDestination(const int numberOfProcesses,
-                             const int processId,
-                             int &higherRankProcess,
-                             int &lowerRankProcess);
-
 void solveSystem(std::vector<double> &yLocal,
                  std::vector<double> &yLocalPrevious,
                  std::vector<double> &yLocalPreviousUpHighBorder,

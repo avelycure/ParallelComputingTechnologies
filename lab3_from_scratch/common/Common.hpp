@@ -5,25 +5,23 @@
 #include "mpi.h"
 #include "../init_conds/InitialConditions.hpp"
 
-void printLog(
-    int numberOfProcesses,
-    int sumSize,
-    double epsilon,
-    bool isDebugMode);
+void printLog(int numberOfProcesses,
+              int sumSize,
+              double epsilon,
+              bool isDebugMode);
 
-void divideResponsibilities(
-    std::vector<double> &y,
-    std::vector<double> &yLocal,
-    std::vector<double> &yLocalPrevious,
-    int numberOfProcesses,
-    int processId,
-    int &localSize,
-    int &localDisplacement,
-    int &localRows,
-    int &localOffsetInRows,
-    std::vector<int> &processesLocationSizes,
-    std::vector<int> &processesDisplacement,
-    InitialConditions initialConditions);
+void divideResponsibilities(std::vector<double> &y,
+                            std::vector<double> &yLocal,
+                            std::vector<double> &yLocalPrevious,
+                            int numberOfProcesses,
+                            int processId,
+                            int &localSize,
+                            int &localDisplacement,
+                            int &localRows,
+                            int &localOffsetInRows,
+                            std::vector<int> &processesLocationSizes,
+                            std::vector<int> &processesDisplacement,
+                            InitialConditions initialConditions);
 
 void printProcessLocations(int numberOfProcesses,
                            std::vector<int> processesDisplacement,
@@ -33,17 +31,16 @@ void printProcessLocations(int numberOfProcesses,
 
 void fillVectorWithZeros(std::vector<double> &y);
 
-void init(
-    int processId,
-    std::vector<double> &y,
-    std::vector<double> &yLocal,
-    std::vector<double> &yLocalPrevious,
-    std::vector<double> &yLocalHighBorder,
-    std::vector<double> &yLocalLowBorder,
-    std::vector<double> &buf1,
-    std::vector<double> &buf2,
-    InitialConditions initialConditions,
-    int localSize);
+void init(int processId,
+          std::vector<double> &y,
+          std::vector<double> &yLocal,
+          std::vector<double> &yLocalPrevious,
+          std::vector<double> &yLocalHighBorder,
+          std::vector<double> &yLocalLowBorder,
+          std::vector<double> &buf1,
+          std::vector<double> &buf2,
+          InitialConditions initialConditions,
+          int localSize);
 
 void setUpLocations(std::vector<int> &processesLocationSizes,
                     std::vector<int> &processesDisplacement,
@@ -52,23 +49,21 @@ void setUpLocations(std::vector<int> &processesLocationSizes,
                     int numberOfProcesses,
                     InitialConditions initialConditions);
 
-void printProcessData(
-    std::vector<double> yLocal,
-    std::vector<double> yLocalPrevious,
-    int processId,
-    int localSize,
-    int localDisplacement,
-    int localRows,
-    int localOffsetInRows,
-    bool isDebugMode);
+void printProcessData(std::vector<double> yLocal,
+                      std::vector<double> yLocalPrevious,
+                      int processId,
+                      int localSize,
+                      int localDisplacement,
+                      int localRows,
+                      int localOffsetInRows,
+                      bool isDebugMode);
 
-void printMethodStatistic(
-    std::string methodName,
-    int finalNorm,
-    int iterationsNumber,
-    double timeStart,
-    double timeEnd,
-    bool isDebugMode);
+void printMethodStatistic(std::string methodName,
+                          int finalNorm,
+                          int iterationsNumber,
+                          double timeStart,
+                          double timeEnd,
+                          bool isDebugMode);
 
 double infiniteNorm(std::vector<double> &x, std::vector<double> &y);
 
@@ -88,3 +83,17 @@ void exchangeDataV1(std::vector<double> &yLocalPrevious,
                     int numberOfProcesses,
                     int processId,
                     InitialConditions initialConditions);
+
+void exchangeDataV2(std::vector<double> &yLocal,
+                    std::vector<double> &yLocalPreviousUpHighBorder,
+                    std::vector<double> &yLocalPreviousDownLowBorder,
+                    std::vector<double> &buf1,
+                    std::vector<double> &buf2,
+                    int numberOfProcesses,
+                    int processId,
+                    InitialConditions initialConditions);
+
+void setSourceAndDestination(const int numberOfProcesses,
+                             const int processId,
+                             int &higherRankProcess,
+                             int &lowerRankProcess);

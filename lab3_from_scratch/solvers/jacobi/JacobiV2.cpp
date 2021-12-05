@@ -92,28 +92,25 @@ void jacobiV2(
 
         yLocal.swap(yLocalPrevious);
 
-        exchangeDataV2(
-            yLocal,
-            yLocalPrevious,
-            yLocalPreviousUpHighBorder,
-            yLocalPreviousDownLowBorder,
-            buf1,
-            buf2,
-            numberOfProcesses,
-            processId,
-            initialConditions);
+        exchangeDataV2(yLocalPrevious,
+                       yLocalPreviousUpHighBorder,
+                       yLocalPreviousDownLowBorder,
+                       buf1,
+                       buf2,
+                       numberOfProcesses,
+                       processId,
+                       initialConditions);
 
-        solveSystem(
-            yLocal,
-            yLocalPrevious,
-            yLocalPreviousUpHighBorder,
-            yLocalPreviousDownLowBorder,
-            numberOfProcesses,
-            processId,
-            localRows,
-            localSize,
-            localOffsetInRows,
-            initialConditions);
+        solveSystem(yLocal,
+                    yLocalPrevious,
+                    yLocalPreviousUpHighBorder,
+                    yLocalPreviousDownLowBorder,
+                    numberOfProcesses,
+                    processId,
+                    localRows,
+                    localSize,
+                    localOffsetInRows,
+                    initialConditions);
 
         localNorm = infiniteNorm(yLocal, yLocalPrevious);
 
@@ -137,44 +134,4 @@ void jacobiV2(
                              timeStart,
                              timeEnd,
                              true);
-}
-
-void exchangeDataV2(std::vector<double> &yLocal,
-                    std::vector<double> &yLocalPrevious,
-                    std::vector<double> &yLocalPreviousUpHighBorder,
-                    std::vector<double> &yLocalPreviousDownLowBorder,
-                    std::vector<double> &buf1,
-                    std::vector<double> &buf2,
-                    int numberOfProcesses,
-                    int processId,
-                    InitialConditions initialConditions)
-{
-    MPI_Status statU, statL;
-    int lowerRankProcess;
-    int higherRankProcess;
-
-    setSourceAndDestination(numberOfProcesses, processId, higherRankProcess, lowerRankProcess);
-
-    copyLastRow(yLocalPrevious, buf1, initialConditions);
-    MPI_Sendrecv(buf1.data(), initialConditions.n, MPI_DOUBLE, higherRankProcess, 56,
-                 yLocalPreviousUpHighBorder.data(), initialConditions.n, MPI_DOUBLE, lowerRankProcess, 56, MPI_COMM_WORLD, &statU);
-
-    copyFirstRow(yLocalPrevious, buf2, initialConditions);
-    MPI_Sendrecv(buf2.data(), initialConditions.n, MPI_DOUBLE, lowerRankProcess, 100,
-                 yLocalPreviousDownLowBorder.data(), initialConditions.n, MPI_DOUBLE, higherRankProcess, 100, MPI_COMM_WORLD, &statL);
-}
-
-void setSourceAndDestination(const int numberOfProcesses,
-                             const int processId,
-                             int &higherRankProcess,
-                             int &lowerRankProcess)
-{
-    higherRankProcess = processId + 1;
-
-    lowerRankProcess = processId - 1;
-
-    if (processId == 0)
-        lowerRankProcess = numberOfProcesses - 1;
-    else if (processId == numberOfProcesses - 1)
-        higherRankProcess = 0;
 }
