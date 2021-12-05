@@ -40,6 +40,8 @@ void init(
     std::vector<double> &yLocalPrevious,
     std::vector<double> &yLocalHighBorder,
     std::vector<double> &yLocalLowBorder,
+    std::vector<double> &buf1,
+    std::vector<double> &buf2,
     InitialConditions initialConditions,
     int localSize);
 

@@ -90,6 +90,8 @@ void init(
     std::vector<double> &yLocalPrevious,
     std::vector<double> &yLocalHighBorder,
     std::vector<double> &yLocalLowBorder,
+    std::vector<double> &buf1,
+                  std::vector<double> &buf2,
     InitialConditions initialConditions,
     int localSize)
 {
@@ -107,6 +109,9 @@ void init(
 
     yLocalLowBorder.resize(initialConditions.n);
     fillVectorWithZeros(yLocalLowBorder);
+
+    buf1.resize(initialConditions.n);
+    buf2.resize(initialConditions.n);
 }
 
 void fillVectorWithZeros(std::vector<double> &x)

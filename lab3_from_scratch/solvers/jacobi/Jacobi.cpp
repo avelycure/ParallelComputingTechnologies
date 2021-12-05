@@ -39,17 +39,16 @@ void jacobiV1(
     int localOffsetInRows;
 
     //Just coefficient of the equation
-    double c = 1.0 / (4.0 + initialConditions.h * initialConditions.h * initialConditions.k * initialConditions.k);
+    //double c = 1.0 / (4.0 + initialConditions.h * initialConditions.h * initialConditions.k * initialConditions.k);
 
     //This vectors are needed to handle data transmission
     //They store first and last rows of process part
     std::vector<double> yLocalPreviousUpHighBorder;
     std::vector<double> yLocalPreviousDownLowBorder;
 
+    //Vectors to handle data transmission
     std::vector<double> buf1;
-    buf1.resize(initialConditions.n);
     std::vector<double> buf2;
-    buf2.resize(initialConditions.n);
 
     //@processesLocationSizes stores data about number of nodes which belongs to each process
     std::vector<int> processesLocationSizes;
@@ -75,6 +74,8 @@ void jacobiV1(
          yLocalPrevious,
          yLocalPreviousUpHighBorder,
          yLocalPreviousDownLowBorder,
+         buf1,
+         buf2,
          initialConditions,
          localSize);
 
@@ -90,9 +91,6 @@ void jacobiV1(
     if (processId == 0)
         timeStart = MPI_Wtime();
 
-    //Local renaming to increase readability
-    double h = initialConditions.h;
-    int n = initialConditions.n;
     do
     {
         iterationsNumber++;
@@ -110,33 +108,6 @@ void jacobiV1(
             processId,
             initialConditions);
 
-        /*if (processId != 0)
-            for (int j = 1; j < n - 1; j++)
-                yLocal[j] = c * (h * h * initialConditions.f(localOffsetInRows * h, j * h) +
-                                 yLocalPreviousUpHighBorder[j] +
-                                 yLocalPrevious[n + j] +
-                                 yLocalPrevious[j - 1] +
-                                 yLocalPrevious[j + 1]);
-        //Else if it is first process do nothing because initial conditions in the first row are zeros
-
-        //Calculate only rows that are not borders of process part
-        for (int i = 1; i < localRows - 1; i++)
-            for (int j = 1; j < n - 1; j++)
-                yLocal[i * n + j] = c * (h * h * initialConditions.f((localOffsetInRows + i) * h, j * h) +
-                                         yLocalPrevious[(i - 1) * n + j] +
-                                         yLocalPrevious[(i + 1) * n + j] +
-                                         yLocalPrevious[i * n + (j - 1)] +
-                                         yLocalPrevious[i * n + (j + 1)]);
-
-        if (processId != numberOfProcesses - 1)
-            for (int j = 1; j < n - 1; j++)
-                yLocal[localSize - n + j] = c * (h * h * initialConditions.f((localOffsetInRows + localRows - 1) * h, j * h) +
-                                                 yLocalPrevious[localSize - 2 * n + j] +
-                                                 yLocalPreviousDownLowBorder[j] +
-                                                 yLocalPrevious[localSize - n + j - 1] +
-                                                 yLocalPrevious[localSize - n + j + 1]);
-        //Else if it is last process do nothing because initial conditions in the last row are zeros
-*/
         solveSystem(
             yLocal,
             yLocalPrevious,
@@ -151,6 +122,7 @@ void jacobiV1(
 
         localNorm = infiniteNorm(yLocal, yLocalPrevious);
 
+        //If maximum norm is decreasing that means that all norms are decreasing
         MPI_Allreduce(&localNorm, &globalNorm, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 
     } while (globalNorm > initialConditions.epsilon);
@@ -158,6 +130,7 @@ void jacobiV1(
     if (processId == 0)
         timeEnd = MPI_Wtime();
 
+    //Filling answer
     MPI_Gatherv(yLocal.data(), yLocal.size(), MPI_DOUBLE, y.data(), processesLocationSizes.data(),
                 processesDisplacement.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
