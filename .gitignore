@@ -34,7 +34,7 @@
 # vsCode files
 /.vscode
 
-/libs
+/lab3_from_scratch/libs
 
 # Object files
 *.out
