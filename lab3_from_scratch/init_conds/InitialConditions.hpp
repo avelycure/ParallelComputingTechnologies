@@ -9,7 +9,7 @@ class InitialConditions
 {
 public:
     //Number of nodes
-    int n = 128;
+    int n = 128 * 16;
 
     double leftBorder = 0.0;
     double rightBorder = 1.0;
@@ -36,7 +36,7 @@ public:
      * */
     double f(double x, double y)
     {
-        return sin(PI * y) * (2.0 + (k * k + PI2) * (1.0 - x) * x);
+        return std::sin(PI * y) * (2.0 + (k * k + PI2) * (1.0 - x) * x);
     }
 
     /**
@@ -44,7 +44,7 @@ public:
     * */
     double analyticSolution(double x, double y)
     {
-        return (1.0 - x) * x * sin(PI * y);
+        return (1.0 - x) * x * std::sin(PI * y);
     }
 
     void computeSolution(std::vector<double> &solution)

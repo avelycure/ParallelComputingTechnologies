@@ -48,7 +48,7 @@ int main(int argc, char **argv)
     {
         std::cout << "Difference: " << infiniteNorm(y, solution) << std::endl;
         //for (int i = 0; i < y.size(); i++)
-        //    std::cout << y[i] << " " << solution[i] << std::endl;
+            //std::cout << y[i] << " " << solution[i] << " " <<  y[i] - solution[i] << std::endl;
     }
 
     MPI_Finalize();
