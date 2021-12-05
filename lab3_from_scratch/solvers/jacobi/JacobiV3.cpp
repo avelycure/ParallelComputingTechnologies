@@ -89,39 +89,47 @@ void jacobiV3(
                      initialConditions.isDebugMode);
 
     //Only processes not on the edges of domain can transfer data to top and to bottom
-    std::vector<MPI_Request> req1, req2;
+    //@requestsFromLowerToHigher is for sending data from lower rank processes to higher
+    //@requestsFromHigherToLower is for sending data from higher rank processes ro lower
+    std::vector<MPI_Request> requestsFromLowerToHigher, requestsFromHigherToLower;
     if ((processId == 0) || (processId == numberOfProcesses - 1))
     {
-        req1.resize(1);
-        req2.resize(1);
+        requestsFromLowerToHigher.resize(1);
+        requestsFromHigherToLower.resize(1);
     }
     else
     {
-        req1.resize(2);
-        req2.resize(2);
+        requestsFromLowerToHigher.resize(2);
+        requestsFromHigherToLower.resize(2);
     }
-    int requestsToTop = 0, requestsToBottom = 0;
+    //Variables for easy handling number of requests
+    //@highRequests is for sending to the top(to lower rank processes) and to receive from the top
+    //@lowRequests if for sending to the bottom(to higher rank processes) and to receive from bottom
+    int highRequests = 0, lowRequests = 0;
 
+    //All processes except numberOfProcesses - 1 rank, could send data forward and can receive data from higher rank process
     if (processId != numberOfProcesses - 1)
     {
-        MPI_Send_init(buf1.data(), initialConditions.n, MPI_DOUBLE, processId + 1, 50, MPI_COMM_WORLD, req1.data() + requestsToTop);
+        //sending last row to next process
+        MPI_Send_init(buf1.data(), initialConditions.n, MPI_DOUBLE, processId + 1, 50, MPI_COMM_WORLD, requestsFromLowerToHigher.data());
         MPI_Recv_init(yLocalPreviousDownLowBorder.data(), initialConditions.n,
-                      MPI_DOUBLE, processId + 1, 70, MPI_COMM_WORLD, req2.data() + requestsToBottom);
-        requestsToTop++;
-        requestsToBottom++;
+                      MPI_DOUBLE, processId + 1, 70, MPI_COMM_WORLD, requestsFromHigherToLower.data());
+        highRequests++;
+        lowRequests++;
     }
 
+    //All processes except 0 rank can receive data from lower rank processes and can send data to them
     if (processId != 0)
     {
         MPI_Recv_init(yLocalPreviousUpHighBorder.data(), initialConditions.n, MPI_DOUBLE, processId - 1,
-                      50, MPI_COMM_WORLD, req1.data() + requestsToTop);
+                      50, MPI_COMM_WORLD, requestsFromLowerToHigher.data() + highRequests);
         MPI_Send_init(buf2.data(), initialConditions.n, MPI_DOUBLE, processId - 1,
-                      70, MPI_COMM_WORLD, req2.data() + requestsToBottom);
-        requestsToTop++;
-        requestsToBottom++;
+                      70, MPI_COMM_WORLD, requestsFromHigherToLower.data() + lowRequests);
+        highRequests++;
+        lowRequests++;
     }
 
-    std::vector<MPI_Status> stat1(requestsToTop), stat2(requestsToBottom);
+    std::vector<MPI_Status> transactionStateFromTop(highRequests), transactionStateFromBottom(lowRequests);
 
     //Local renaming to increase readability
     double h = initialConditions.h;
@@ -136,14 +144,15 @@ void jacobiV3(
     do
     {
         iterationsNumber++;
-        //std::cout << iterationsNumber << ::std::endl;
 
         yLocal.swap(yLocalPrevious);
 
+        //Begin transfering data, as we need the first row to begin solving system
         copyLastRow(yLocalPrevious, buf1, initialConditions);
-        MPI_Startall(requestsToTop, req1.data());
+        MPI_Startall(highRequests, requestsFromLowerToHigher.data());
 
-        MPI_Waitall(requestsToTop, req1.data(), stat1.data());
+        //Wait until we get the row before first to begin calculation
+        MPI_Waitall(highRequests, requestsFromLowerToHigher.data(), transactionStateFromTop.data());
 
         if (processId != 0)
             for (int j = 1; j < n - 1; j++)
@@ -163,10 +172,12 @@ void jacobiV3(
                                          yLocalPrevious[i * n + (j - 1)] +
                                          yLocalPrevious[i * n + (j + 1)]);
 
+        //We need last row so we begin transfering data in first rows to lower rank processes
         copyFirstRow(yLocalPrevious, buf2, initialConditions);
-        MPI_Startall(requestsToBottom, req2.data());
+        MPI_Startall(lowRequests, requestsFromHigherToLower.data());
 
-        MPI_Waitall(requestsToBottom, req2.data(), stat2.data());
+        //Wait until we get the row after last to begin calculation
+        MPI_Waitall(lowRequests, requestsFromHigherToLower.data(), transactionStateFromBottom.data());
 
         if (processId != numberOfProcesses - 1)
             for (int j = 1; j < n - 1; j++)
@@ -175,18 +186,6 @@ void jacobiV3(
                                                  yLocalPreviousDownLowBorder[j] +
                                                  yLocalPrevious[localSize - n + j - 1] +
                                                  yLocalPrevious[localSize - n + j + 1]);
-
-        /*solveSystem(
-            yLocal,
-            yLocalPrevious,
-            yLocalPreviousUpHighBorder,
-            yLocalPreviousDownLowBorder,
-            numberOfProcesses,
-            processId,
-            localRows,
-            localSize,
-            localOffsetInRows,
-            initialConditions);*/
 
         localNorm = infiniteNorm(yLocal, yLocalPrevious);
 
