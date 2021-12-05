@@ -5,9 +5,11 @@
 //If offset in rows is even number then that row begins with black
 //If offset in rows is odd number then that row begins with red
 
+//(localOffsetInRows % 2 == 0) ? 2 : 1 means that if we are in domain which starts from black node then begin from third element
+// (0, 1, 2 in vector order), if we are in domain that begins with red node then we should begin from element on 1 position
+
 /**
- * (localOffsetInRows % 2 == 0) ? 2 : 1 means that if we are in domain which starts from black node then begin from third element
- * (0, 1, 2 in vector order), if we are in domain that begins with red node then we should begin from element on 1 position
+ * Method for solving system only in black nodes. This method is using PREVIOUS(on previos iteration) values of our solution
  * */
 void solveBlack(
     std::vector<double> &yLocal,
@@ -54,6 +56,9 @@ void solveBlack(
                                              yLocalPrevious[localSize - n + j + 1]);
 }
 
+/**
+ * Method for solving system only in red nodes. This method is using CURRENT(on current iteration) values of our solution
+ * */
 void solveRed(
     std::vector<double> &yLocal,
     std::vector<double> &yLocalPrevious,

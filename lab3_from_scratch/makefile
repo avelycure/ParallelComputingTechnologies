@@ -9,4 +9,6 @@ all:
 	solvers/seidel/SeidelV3.cpp \
 	solvers/seidel/SeidelCommon.cpp \
 	common/Common.cpp \
+	common/Logging.cpp \
+	common/DataExchanging.cpp \
 	-o compiled/lab3.out

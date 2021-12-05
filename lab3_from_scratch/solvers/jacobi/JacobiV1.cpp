@@ -22,9 +22,6 @@ void jacobiV1(
 
     int iterationsNumber = 0;
 
-    //Difference with analytic solution
-    double difference = 0.0;
-
     //Part of the solution, here is situated part with which every process works
     std::vector<double> yLocal;
     std::vector<double> yLocalPrevious;
@@ -136,6 +133,5 @@ void jacobiV1(
                              iterationsNumber,
                              timeStart,
                              timeEnd,
-                             difference,
                              true);
 }

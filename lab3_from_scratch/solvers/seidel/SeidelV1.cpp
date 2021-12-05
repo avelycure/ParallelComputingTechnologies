@@ -22,9 +22,6 @@ void seidelV1(
 
     int iterationsNumber = 0;
 
-    //Difference with analytic solution
-    double difference = 0.0;
-
     //Part of the solution, here is situated part with which every process works
     std::vector<double> yLocal;
     std::vector<double> yLocalPrevious;
@@ -95,6 +92,7 @@ void seidelV1(
 
         yLocal.swap(yLocalPrevious);
 
+        //Exchanging previous! values of solution
         exchangeDataV1(yLocalPrevious,
                        yLocalPreviousUpHighBorder,
                        yLocalPreviousDownLowBorder,
@@ -104,6 +102,7 @@ void seidelV1(
                        processId,
                        initialConditions);
 
+        //In this part we solve equation with previous! values of yLocal
         solveBlack(yLocal,
                    yLocalPrevious,
                    yLocalPreviousUpHighBorder,
@@ -115,6 +114,7 @@ void seidelV1(
                    localOffsetInRows,
                    initialConditions);
 
+        //Exchanging current! values of solution
         exchangeDataV1(yLocal,
                        yLocalPreviousUpHighBorder,
                        yLocalPreviousDownLowBorder,
@@ -124,6 +124,7 @@ void seidelV1(
                        processId,
                        initialConditions);
 
+        //In this part we solve equation with current! values of yLocal
         solveRed(yLocal,
                  yLocalPrevious,
                  yLocalPreviousUpHighBorder,
@@ -156,6 +157,5 @@ void seidelV1(
                              iterationsNumber,
                              timeStart,
                              timeEnd,
-                             difference,
                              true);
 }

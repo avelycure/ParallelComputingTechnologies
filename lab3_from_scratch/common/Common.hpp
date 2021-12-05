@@ -68,7 +68,6 @@ void printMethodStatistic(
     int iterationsNumber,
     double timeStart,
     double timeEnd,
-    double differenceWithAnalyticSolution,
     bool isDebugMode);
 
 double infiniteNorm(std::vector<double> &x, std::vector<double> &y);
