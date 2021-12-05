@@ -1,6 +1,6 @@
 #include <vector>
 #include <iostream>
-#include "../../mpi.h"
+#include "mpi.h"
 #include "../../common/Common.hpp"
 #include "../../init_conds/InitialConditions.hpp"
 

@@ -123,6 +123,12 @@ void jacobiV3(
 
     std::vector<MPI_Status> stat1(requestsToTop), stat2(requestsToBottom);
 
+    //Local renaming to increase readability
+    double h = initialConditions.h;
+    int n = initialConditions.n;
+    //Just coefficient of the equation
+    double c = 1.0 / (4.0 + initialConditions.h * initialConditions.h * initialConditions.k * initialConditions.k);
+
     MPI_Barrier(MPI_COMM_WORLD);
     if (processId == 0)
         timeStart = MPI_Wtime();
@@ -137,13 +143,40 @@ void jacobiV3(
         copyLastRow(yLocalPrevious, buf1, initialConditions);
         MPI_Startall(requestsToTop, req1.data());
 
+        MPI_Waitall(requestsToTop, req1.data(), stat1.data());
+
+        if (processId != 0)
+            for (int j = 1; j < n - 1; j++)
+                yLocal[j] = c * (h * h * initialConditions.f(localOffsetInRows * h, j * h) +
+                                 yLocalPreviousUpHighBorder[j] +
+                                 yLocalPrevious[n + j] +
+                                 yLocalPrevious[j - 1] +
+                                 yLocalPrevious[j + 1]);
+        //Else if it is first process do nothing because initial conditions in the first row are zeros
+
+        //Calculate only rows that are not borders of process part
+        for (int i = 1; i < localRows - 1; i++)
+            for (int j = 1; j < n - 1; j++)
+                yLocal[i * n + j] = c * (h * h * initialConditions.f((localOffsetInRows + i) * h, j * h) +
+                                         yLocalPrevious[(i - 1) * n + j] +
+                                         yLocalPrevious[(i + 1) * n + j] +
+                                         yLocalPrevious[i * n + (j - 1)] +
+                                         yLocalPrevious[i * n + (j + 1)]);
+
         copyFirstRow(yLocalPrevious, buf2, initialConditions);
         MPI_Startall(requestsToBottom, req2.data());
 
         MPI_Waitall(requestsToBottom, req2.data(), stat2.data());
-        MPI_Waitall(requestsToTop, req1.data(), stat1.data());
 
-        solveSystem(
+        if (processId != numberOfProcesses - 1)
+            for (int j = 1; j < n - 1; j++)
+                yLocal[localSize - n + j] = c * (h * h * initialConditions.f((localOffsetInRows + localRows - 1) * h, j * h) +
+                                                 yLocalPrevious[localSize - 2 * n + j] +
+                                                 yLocalPreviousDownLowBorder[j] +
+                                                 yLocalPrevious[localSize - n + j - 1] +
+                                                 yLocalPrevious[localSize - n + j + 1]);
+
+        /*solveSystem(
             yLocal,
             yLocalPrevious,
             yLocalPreviousUpHighBorder,
@@ -153,7 +186,7 @@ void jacobiV3(
             localRows,
             localSize,
             localOffsetInRows,
-            initialConditions);
+            initialConditions);*/
 
         localNorm = infiniteNorm(yLocal, yLocalPrevious);
 
