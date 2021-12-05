@@ -34,5 +34,7 @@
 # vsCode files
 /.vscode
 
+/libs
+
 # Object files
 *.out
