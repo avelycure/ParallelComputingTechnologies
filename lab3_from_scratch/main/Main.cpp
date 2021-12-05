@@ -40,16 +40,21 @@ int main(int argc, char **argv)
         initialConditions.computeSolution(solution);
     }
 
+    MPI_Barrier(MPI_COMM_WORLD);
     jacobiV1(y,
              initialConditions,
              numberOfProcesses,
              processId);
     if (processId == 0)
-    {
-        std::cout << "Difference: " << infiniteNorm(y, solution) << std::endl;
-        //for (int i = 0; i < y.size(); i++)
-            //std::cout << y[i] << " " << solution[i] << " " <<  y[i] - solution[i] << std::endl;
-    }
+        std::cout << "Difference(jacobiV1): " << infiniteNorm(y, solution) << std::endl;
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    jacobiV2(y,
+             initialConditions,
+             numberOfProcesses,
+             processId);
+    if (processId == 0)
+        std::cout << "Difference(jacobiV2): " << infiniteNorm(y, solution) << std::endl;
 
     MPI_Finalize();
 }

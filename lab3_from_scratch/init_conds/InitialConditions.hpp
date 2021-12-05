@@ -9,7 +9,7 @@ class InitialConditions
 {
 public:
     //Number of nodes
-    int n = 512 * 2;
+    int n = 512;
 
     double leftBorder = 0.0;
     double rightBorder = 1.0;
@@ -29,7 +29,7 @@ public:
     const double PI2 = PI * PI;
 
     //Enable/disable debug information
-    bool isDebugMode = true;
+    bool isDebugMode = false;
 
     /**
      * Right part of equation
