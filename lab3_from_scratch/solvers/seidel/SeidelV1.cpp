@@ -1,9 +1,9 @@
-#include "Jacobi.hpp"
+#include "Seidel.hpp"
 
 /**
  * Used methods: MPI_Send. MPI_Recv
  * */
-void jacobiV1(
+void seidelV1(
     std::vector<double> &y,
     InitialConditions initialConditions,
     int numberOfProcesses,
@@ -104,16 +104,36 @@ void jacobiV1(
                        processId,
                        initialConditions);
 
-        solveSystem(yLocal,
-                    yLocalPrevious,
-                    yLocalPreviousUpHighBorder,
-                    yLocalPreviousDownLowBorder,
-                    numberOfProcesses,
-                    processId,
-                    localRows,
-                    localSize,
-                    localOffsetInRows,
-                    initialConditions);
+        solveBlack(yLocal,
+                   yLocalPrevious,
+                   yLocalPreviousUpHighBorder,
+                   yLocalPreviousDownLowBorder,
+                   numberOfProcesses,
+                   processId,
+                   localRows,
+                   localSize,
+                   localOffsetInRows,
+                   initialConditions);
+
+        exchangeDataV1(yLocal,
+                       yLocalPreviousUpHighBorder,
+                       yLocalPreviousDownLowBorder,
+                       buf1,
+                       buf2,
+                       numberOfProcesses,
+                       processId,
+                       initialConditions);
+
+        solveRed(yLocal,
+                 yLocalPrevious,
+                 yLocalPreviousUpHighBorder,
+                 yLocalPreviousDownLowBorder,
+                 numberOfProcesses,
+                 processId,
+                 localRows,
+                 localSize,
+                 localOffsetInRows,
+                 initialConditions);
 
         localNorm = infiniteNorm(yLocal, yLocalPrevious);
 
@@ -131,7 +151,7 @@ void jacobiV1(
 
     MPI_Barrier(MPI_COMM_WORLD);
     if (processId == 0)
-        printMethodStatistic("Jacobi. MPI_Send. MPI_Recv",
+        printMethodStatistic("Seidel. MPI_Send. MPI_Recv",
                              globalNorm,
                              iterationsNumber,
                              timeStart,

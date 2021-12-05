@@ -38,9 +38,6 @@ void jacobiV3(
     //Offset in rows from the beginning
     int localOffsetInRows;
 
-    //Just coefficient of the equation
-    //double c = 1.0 / (4.0 + initialConditions.h * initialConditions.h * initialConditions.k * initialConditions.k);
-
     //This vectors are needed to handle data transmission
     //They store first and last rows of process part
     std::vector<double> yLocalPreviousUpHighBorder;
@@ -203,7 +200,8 @@ void jacobiV3(
 
     MPI_Barrier(MPI_COMM_WORLD);
     if (processId == 0)
-        printMethodStatistic(globalNorm,
+        printMethodStatistic("Jacobi.MPI_Send_init. MPI_Recv_init",
+                             globalNorm,
                              iterationsNumber,
                              timeStart,
                              timeEnd,

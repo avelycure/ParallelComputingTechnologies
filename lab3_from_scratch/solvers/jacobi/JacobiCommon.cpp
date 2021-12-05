@@ -1,31 +1,6 @@
 #include "Jacobi.hpp"
 
 /**
- * Copy first row of local part of solution
- * This function is needed for transmition
- * */
-void copyFirstRow(std::vector<double> &yLocal,
-                  std::vector<double> &localHighBorder,
-                  InitialConditions initialConditions)
-{
-    for (int i = 0; i < initialConditions.n; i++)
-        localHighBorder[i] = yLocal[i];
-}
-
-/**
- * Copy last row of local part of solution
- * This function is needed for transmition
- * */
-void copyLastRow(std::vector<double> &yLocal,
-                 std::vector<double> &localLowBorder,
-                 InitialConditions initialConditions)
-{
-    for (int i = 0; i < initialConditions.n; i++)
-        localLowBorder[i] = yLocal[yLocal.size() - initialConditions.n + i];
-}
-
-
-/**
  * Solving the linear system of equations with 5 diagonal matrix which we get trying to solve
  * Helmholtz equation in square
  * */

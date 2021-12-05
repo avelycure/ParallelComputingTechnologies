@@ -9,24 +9,6 @@ void jacobiV1(std::vector<double> &y,
               int numberOfProcesses,
               int processId);
 
-void copyFirstRow(std::vector<double> &yLocal,
-                  std::vector<double> &localHighBorder,
-                  InitialConditions initialConditions);
-
-void copyLastRow(std::vector<double> &yLocal,
-                 std::vector<double> &localLowBorder,
-                 InitialConditions initialConditions);
-
-void exchangeDataV1(std::vector<double> &yLocal,
-                    std::vector<double> &yLocalPrevious,
-                    std::vector<double> &yLocalPreviousUpHighBorder,
-                    std::vector<double> &yLocalPreviousDownLowBorder,
-                    std::vector<double> &buf1,
-                    std::vector<double> &buf2,
-                    int numberOfProcesses,
-                    int processId,
-                    InitialConditions initialConditions);
-
 void jacobiV2(std::vector<double> &y,
               InitialConditions initialConditions,
               int numberOfProcesses,

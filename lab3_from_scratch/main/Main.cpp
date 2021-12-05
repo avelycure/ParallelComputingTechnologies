@@ -64,5 +64,13 @@ int main(int argc, char **argv)
     if (processId == 0)
         std::cout << "Difference(jacobiV3): " << infiniteNorm(y, solution) << std::endl;
 
+    MPI_Barrier(MPI_COMM_WORLD);
+    seidelV1(y,
+             initialConditions,
+             numberOfProcesses,
+             processId);
+    if (processId == 0)
+        std::cout << "Difference(seidelV1): " << infiniteNorm(y, solution) << std::endl;
+
     MPI_Finalize();
 }
