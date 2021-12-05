@@ -9,7 +9,7 @@ class InitialConditions
 {
 public:
     //Number of nodes
-    int n = 128 * 16;
+    int n = 512 * 2;
 
     double leftBorder = 0.0;
     double rightBorder = 1.0;

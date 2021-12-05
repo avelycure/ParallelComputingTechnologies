@@ -29,9 +29,6 @@ void jacobiV1(
     std::vector<double> yLocal;
     std::vector<double> yLocalPrevious;
 
-    //Variables to get transaction status
-    MPI_Status statU, statL;
-
     //Time counters
     double timeStart, timeEnd;
 
@@ -90,60 +87,30 @@ void jacobiV1(
                      localOffsetInRows,
                      initialConditions.isDebugMode);
 
-    MPI_Barrier(MPI_COMM_WORLD);
     if (processId == 0)
         timeStart = MPI_Wtime();
 
     //Local renaming to increase readability
     double h = initialConditions.h;
     int n = initialConditions.n;
-
-    /*for (int i = 0; i < yLocal.size(); i++)
-    {
-        yLocal[i] = i + processId * 100;
-        //yLocalPreviousUpHighBorder[i] = i + processId * 10;
-        //yLocalPreviousDownLowBorder[i] = i + processId * 100 + 50;
-    }*/
-
     do
     {
         iterationsNumber++;
 
         yLocal.swap(yLocalPrevious);
 
-        //Send data from lower rank processes to higher
-        if (processId != numberOfProcesses - 1)
-        {
-            //copyLastRow(yLocalPrevious, yLocalPreviousDownLowBorder, initialConditions);
-            //MPI_Send(yLocalPreviousDownLowBorder.data(), n, MPI_DOUBLE, processId + 1, 42, MPI_COMM_WORLD);
-            copyLastRow(yLocalPrevious, buf1, initialConditions);
-            MPI_Send(buf1.data(), n, MPI_DOUBLE, processId + 1, 42, MPI_COMM_WORLD);
-        }
-        if (processId != 0)
-            MPI_Recv(yLocalPreviousUpHighBorder.data(), n, MPI_DOUBLE, processId - 1, 42, MPI_COMM_WORLD, &statL);
+        exchangeData(
+            yLocal,
+            yLocalPrevious,
+            yLocalPreviousUpHighBorder,
+            yLocalPreviousDownLowBorder,
+            buf1,
+            buf2,
+            numberOfProcesses,
+            processId,
+            initialConditions);
 
-        //Send data from higher rank processes to lower
-        if (processId != 0)
-        {
-            //copyFirstRow(yLocalPrevious, yLocalPreviousUpHighBorder, initialConditions);
-            //MPI_Send(yLocalPreviousUpHighBorder.data(), n, MPI_DOUBLE, processId - 1, 41, MPI_COMM_WORLD);
-            copyFirstRow(yLocalPrevious, buf2, initialConditions);
-            MPI_Send(buf2.data(), n, MPI_DOUBLE, processId - 1, 41, MPI_COMM_WORLD);
-        }
-        if (processId != numberOfProcesses - 1)
-            MPI_Recv(yLocalPreviousDownLowBorder.data(), n, MPI_DOUBLE, processId + 1, 41, MPI_COMM_WORLD, &statU);
-
-        /*for (int i = 0; i < yLocalPreviousUpHighBorder.size(); i++)
-    {
-        std::cout << "UProcess" << processId << " [" << i << "]=" << yLocalPreviousUpHighBorder[i] << std::endl;
-    }
-
-    for (int i = 0; i < yLocalPreviousUpHighBorder.size(); i++)
-    {
-        std::cout << "DProcess" << processId << " [" << i << "]=" << yLocalPreviousDownLowBorder[i] << std::endl;
-    }*/
-
-        if (processId != 0)
+        /*if (processId != 0)
             for (int j = 1; j < n - 1; j++)
                 yLocal[j] = c * (h * h * initialConditions.f(localOffsetInRows * h, j * h) +
                                  yLocalPreviousUpHighBorder[j] +
@@ -169,12 +136,22 @@ void jacobiV1(
                                                  yLocalPrevious[localSize - n + j - 1] +
                                                  yLocalPrevious[localSize - n + j + 1]);
         //Else if it is last process do nothing because initial conditions in the last row are zeros
+*/
+        solveSystem(
+            yLocal,
+            yLocalPrevious,
+            yLocalPreviousUpHighBorder,
+            yLocalPreviousDownLowBorder,
+            numberOfProcesses,
+            processId,
+            localRows,
+            localSize,
+            localOffsetInRows,
+            initialConditions);
 
         localNorm = infiniteNorm(yLocal, yLocalPrevious);
 
         MPI_Allreduce(&localNorm, &globalNorm, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-
-        //std::cout << iterationsNumber << "Process id: " << processId << " local norm: " << localNorm << " global: " << globalNorm << std::endl;
 
     } while (globalNorm > initialConditions.epsilon);
 
@@ -216,4 +193,88 @@ void copyLastRow(std::vector<double> &yLocal,
 {
     for (int i = 0; i < initialConditions.n; i++)
         localLowBorder[i] = yLocal[yLocal.size() - initialConditions.n + i];
+}
+
+/**
+ * We have to exchange two rows: the first and the last. We have two buffers to simplify readability: @buf1, @buf2.
+ * Firstly we send from top of the matrix to the bottom. The schema is like this: 0->1->2->3->... where numbers are processes ranks
+ * Then we send data from bottom to the top: 4->3->2->1->0. Each process(except 0 and numberOfProcesses - 1,  which are
+ * special cases) has one row before(or up) it and one row after. So we have two vectors to work with: @yLocalPreviousUpHighBorder
+ * and @yLocalPreviousDownLowBorder
+ * */
+void exchangeData(std::vector<double> &yLocal,
+                  std::vector<double> &yLocalPrevious,
+                  std::vector<double> &yLocalPreviousUpHighBorder,
+                  std::vector<double> &yLocalPreviousDownLowBorder,
+                  std::vector<double> &buf1,
+                  std::vector<double> &buf2,
+                  int numberOfProcesses,
+                  int processId,
+                  InitialConditions initialConditions)
+{
+    //Variables to get transaction status
+    MPI_Status statU, statL;
+
+    //Send data from lower rank processes to higher
+    if (processId != numberOfProcesses - 1)
+    {
+        copyLastRow(yLocalPrevious, buf1, initialConditions);
+        MPI_Send(buf1.data(), initialConditions.n, MPI_DOUBLE, processId + 1, 42, MPI_COMM_WORLD);
+    }
+    if (processId != 0)
+        MPI_Recv(yLocalPreviousUpHighBorder.data(), initialConditions.n, MPI_DOUBLE, processId - 1, 42, MPI_COMM_WORLD, &statL);
+
+    //Send data from higher rank processes to lower
+    if (processId != 0)
+    {
+        copyFirstRow(yLocalPrevious, buf2, initialConditions);
+        MPI_Send(buf2.data(), initialConditions.n, MPI_DOUBLE, processId - 1, 41, MPI_COMM_WORLD);
+    }
+    if (processId != numberOfProcesses - 1)
+        MPI_Recv(yLocalPreviousDownLowBorder.data(), initialConditions.n, MPI_DOUBLE, processId + 1, 41, MPI_COMM_WORLD, &statU);
+}
+
+void solveSystem(
+    std::vector<double> &yLocal,
+    std::vector<double> &yLocalPrevious,
+    std::vector<double> &yLocalPreviousUpHighBorder,
+    std::vector<double> &yLocalPreviousDownLowBorder,
+    int numberOfProcesses,
+    int processId,
+    int localRows,
+    int localSize,
+    int localOffsetInRows,
+    InitialConditions initialConditions)
+{
+    //Local renaming to increase readability
+    double h = initialConditions.h;
+    int n = initialConditions.n;
+    //Just coefficient of the equation
+    double c = 1.0 / (4.0 + initialConditions.h * initialConditions.h * initialConditions.k * initialConditions.k);
+
+    if (processId != 0)
+        for (int j = 1; j < n - 1; j++)
+            yLocal[j] = c * (h * h * initialConditions.f(localOffsetInRows * h, j * h) +
+                             yLocalPreviousUpHighBorder[j] +
+                             yLocalPrevious[n + j] +
+                             yLocalPrevious[j - 1] +
+                             yLocalPrevious[j + 1]);
+    //Else if it is first process do nothing because initial conditions in the first row are zeros
+
+    //Calculate only rows that are not borders of process part
+    for (int i = 1; i < localRows - 1; i++)
+        for (int j = 1; j < n - 1; j++)
+            yLocal[i * n + j] = c * (h * h * initialConditions.f((localOffsetInRows + i) * h, j * h) +
+                                     yLocalPrevious[(i - 1) * n + j] +
+                                     yLocalPrevious[(i + 1) * n + j] +
+                                     yLocalPrevious[i * n + (j - 1)] +
+                                     yLocalPrevious[i * n + (j + 1)]);
+
+    if (processId != numberOfProcesses - 1)
+        for (int j = 1; j < n - 1; j++)
+            yLocal[localSize - n + j] = c * (h * h * initialConditions.f((localOffsetInRows + localRows - 1) * h, j * h) +
+                                             yLocalPrevious[localSize - 2 * n + j] +
+                                             yLocalPreviousDownLowBorder[j] +
+                                             yLocalPrevious[localSize - n + j - 1] +
+                                             yLocalPrevious[localSize - n + j + 1]);
 }

@@ -17,3 +17,25 @@ void copyFirstRow(std::vector<double> &yLocal,
 void copyLastRow(std::vector<double> &yLocal,
                  std::vector<double> &localLowBorder,
                  InitialConditions initialConditions);
+
+void exchangeData(std::vector<double> &yLocal,
+                  std::vector<double> &yLocalPrevious,
+                  std::vector<double> &yLocalPreviousUpHighBorder,
+                  std::vector<double> &yLocalPreviousDownLowBorder,
+                  std::vector<double> &buf1,
+                  std::vector<double> &buf2,
+                  int numberOfProcesses,
+                  int processId,
+                  InitialConditions initialConditions);
+
+void solveSystem(
+    std::vector<double> &yLocal,
+    std::vector<double> &yLocalPrevious,
+    std::vector<double> &yLocalPreviousUpHighBorder,
+    std::vector<double> &yLocalPreviousDownLowBorder,
+    int numberOfProcesses,
+    int processId,
+    int localRows,
+    int localSize,
+    int localOffsetInRows,
+    InitialConditions initialConditions);
