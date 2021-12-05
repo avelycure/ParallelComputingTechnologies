@@ -1,9 +1,9 @@
 #include "Jacobi.hpp"
 
 /**
- * Used methods: MPI_Send. MPI_Recv
+ * Used methods: MPI_Recv_init. MPI_Send_init
  * */
-void jacobiV1(
+void jacobiV3(
     std::vector<double> &y,
     InitialConditions initialConditions,
     int numberOfProcesses,
@@ -88,6 +88,41 @@ void jacobiV1(
                      localOffsetInRows,
                      initialConditions.isDebugMode);
 
+    //Only processes not on the edges of domain can transfer data to top and to bottom
+    std::vector<MPI_Request> req1, req2;
+    if ((processId == 0) || (processId == numberOfProcesses - 1))
+    {
+        req1.resize(1);
+        req2.resize(1);
+    }
+    else
+    {
+        req1.resize(2);
+        req2.resize(2);
+    }
+    int requestsToTop = 0, requestsToBottom = 0;
+
+    if (processId != numberOfProcesses - 1)
+    {
+        MPI_Send_init(buf1.data(), initialConditions.n, MPI_DOUBLE, processId + 1, 50, MPI_COMM_WORLD, req1.data() + requestsToTop);
+        MPI_Recv_init(yLocalPreviousDownLowBorder.data(), initialConditions.n,
+                      MPI_DOUBLE, processId + 1, 70, MPI_COMM_WORLD, req2.data() + requestsToBottom);
+        requestsToTop++;
+        requestsToBottom++;
+    }
+
+    if (processId != 0)
+    {
+        MPI_Recv_init(yLocalPreviousUpHighBorder.data(), initialConditions.n, MPI_DOUBLE, processId - 1,
+                      50, MPI_COMM_WORLD, req1.data() + requestsToTop);
+        MPI_Send_init(buf2.data(), initialConditions.n, MPI_DOUBLE, processId - 1,
+                      70, MPI_COMM_WORLD, req2.data() + requestsToBottom);
+        requestsToTop++;
+        requestsToBottom++;
+    }
+
+    std::vector<MPI_Status> stat1(requestsToTop), stat2(requestsToBottom);
+
     MPI_Barrier(MPI_COMM_WORLD);
     if (processId == 0)
         timeStart = MPI_Wtime();
@@ -95,19 +130,18 @@ void jacobiV1(
     do
     {
         iterationsNumber++;
+        //std::cout << iterationsNumber << ::std::endl;
 
         yLocal.swap(yLocalPrevious);
 
-        exchangeDataV1(
-            yLocal,
-            yLocalPrevious,
-            yLocalPreviousUpHighBorder,
-            yLocalPreviousDownLowBorder,
-            buf1,
-            buf2,
-            numberOfProcesses,
-            processId,
-            initialConditions);
+        copyLastRow(yLocalPrevious, buf1, initialConditions);
+        MPI_Startall(requestsToTop, req1.data());
+
+        copyFirstRow(yLocalPrevious, buf2, initialConditions);
+        MPI_Startall(requestsToBottom, req2.data());
+
+        MPI_Waitall(requestsToBottom, req2.data(), stat2.data());
+        MPI_Waitall(requestsToTop, req1.data(), stat1.data());
 
         solveSystem(
             yLocal,
@@ -143,43 +177,4 @@ void jacobiV1(
                              timeEnd,
                              difference,
                              true);
-}
-
-/**
- * We have to exchange two rows: the first and the last. We have two buffers to simplify readability: @buf1, @buf2.
- * Firstly we send from top of the matrix to the bottom. The schema is like this: 0->1->2->3->... where numbers are processes ranks
- * Then we send data from bottom to the top: 4->3->2->1->0. Each process(except 0 and numberOfProcesses - 1,  which are
- * special cases) has one row before(or up) it and one row after. So we have two vectors to work with: @yLocalPreviousUpHighBorder
- * and @yLocalPreviousDownLowBorder
- * */
-void exchangeDataV1(std::vector<double> &yLocal,
-                    std::vector<double> &yLocalPrevious,
-                    std::vector<double> &yLocalPreviousUpHighBorder,
-                    std::vector<double> &yLocalPreviousDownLowBorder,
-                    std::vector<double> &buf1,
-                    std::vector<double> &buf2,
-                    int numberOfProcesses,
-                    int processId,
-                    InitialConditions initialConditions)
-{
-    //Variables to get transaction status
-    MPI_Status statU, statL;
-
-    //Send data from lower rank processes to higher
-    if (processId != numberOfProcesses - 1)
-    {
-        copyLastRow(yLocalPrevious, buf1, initialConditions);
-        MPI_Send(buf1.data(), initialConditions.n, MPI_DOUBLE, processId + 1, 42, MPI_COMM_WORLD);
-    }
-    if (processId != 0)
-        MPI_Recv(yLocalPreviousUpHighBorder.data(), initialConditions.n, MPI_DOUBLE, processId - 1, 42, MPI_COMM_WORLD, &statL);
-
-    //Send data from higher rank processes to lower
-    if (processId != 0)
-    {
-        copyFirstRow(yLocalPrevious, buf2, initialConditions);
-        MPI_Send(buf2.data(), initialConditions.n, MPI_DOUBLE, processId - 1, 41, MPI_COMM_WORLD);
-    }
-    if (processId != numberOfProcesses - 1)
-        MPI_Recv(yLocalPreviousDownLowBorder.data(), initialConditions.n, MPI_DOUBLE, processId + 1, 41, MPI_COMM_WORLD, &statU);
 }

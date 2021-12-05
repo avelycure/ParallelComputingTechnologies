@@ -88,6 +88,7 @@ void jacobiV2(
                      localOffsetInRows,
                      initialConditions.isDebugMode);
 
+    MPI_Barrier(MPI_COMM_WORLD);
     if (processId == 0)
         timeStart = MPI_Wtime();
 
@@ -141,7 +142,7 @@ void jacobiV2(
                              timeStart,
                              timeEnd,
                              difference,
-                             initialConditions.isDebugMode);
+                             true);
 }
 
 void exchangeDataV2(std::vector<double> &yLocal,
