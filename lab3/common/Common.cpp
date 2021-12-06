@@ -1,159 +1,165 @@
 #include "Common.hpp"
 
-void printLog(
+/**
+ * Divide responsibilities between processes
+ * Which should do which work
+ * @yLocal is part of solution vector which we search
+ * @yLocalPrevious is the same as @yLocal, but on previous iteration
+ * */
+void divideResponsibilities(
+    std::vector<double> &y,
+    std::vector<double> &yLocal,
+    std::vector<double> &yLocalPrevious,
     int numberOfProcesses,
-    int sumSize,
-    double khRelation,
-    double eps)
+    int processId,
+    int &localSize,
+    int &localDisplacement,
+    int &localRows,
+    int &localOffsetInRows,
+    std::vector<int> &processesLocationSizes,
+    std::vector<int> &processesDisplacement,
+    InitialConditions initialConditions)
 {
-    std::cout << "\033[1;33mLOG\033[0m" << std::endl;
-    std::cout << "numberOfProcesses = " << numberOfProcesses << std::endl;
-    std::cout << "sumSize = " << sumSize << std::endl;
-    std::cout << "k^2 / h^2 = " << khRelation << std::endl;
-    std::cout << "eps = " << eps << std::endl;
+    //@processesLocalRows stores data about number of rows in part of every process
+    std::vector<int> processesLocalRows;
+    //@processesOffsetInRows stores data about offset in rows from the beginning of our solution
+    std::vector<int> processesOffsetInRows;
+
+    if (processId == 0)
+    {
+        setUpLocations(
+            processesLocationSizes,
+            processesDisplacement,
+            processesLocalRows,
+            processesOffsetInRows,
+            numberOfProcesses,
+            initialConditions);
+    }
+
+    MPI_Scatter(processesLocationSizes.data(), 1, MPI_INT, &localSize, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Scatter(processesDisplacement.data(), 1, MPI_INT, &localDisplacement, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Scatter(processesLocalRows.data(), 1, MPI_INT, &localRows, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Scatter(processesOffsetInRows.data(), 1, MPI_INT, &localOffsetInRows, 1, MPI_INT, 0, MPI_COMM_WORLD);
 }
 
-double infiniteNorm(std::vector<double> &x, std::vector<double> &y, int begin, int end)
+/**
+ * Init variables before calculation
+ * */
+void init(
+    int processId,
+    std::vector<double> &y,
+    std::vector<double> &yLocal,
+    std::vector<double> &yLocalPrevious,
+    std::vector<double> &yLocalHighBorder,
+    std::vector<double> &yLocalLowBorder,
+    std::vector<double> &buf1,
+    std::vector<double> &buf2,
+    InitialConditions initialConditions,
+    int localSize)
+{
+    if (processId == 0)
+        fillVectorWithZeros(y);
+
+    yLocal.resize(localSize);
+    fillVectorWithZeros(yLocal);
+
+    yLocalPrevious.resize(localSize);
+    fillVectorWithZeros(yLocalPrevious);
+
+    yLocalHighBorder.resize(initialConditions.n);
+    fillVectorWithZeros(yLocalHighBorder);
+
+    yLocalLowBorder.resize(initialConditions.n);
+    fillVectorWithZeros(yLocalLowBorder);
+
+    buf1.resize(initialConditions.n);
+    buf2.resize(initialConditions.n);
+}
+
+void fillVectorWithZeros(std::vector<double> &x)
+{
+    for (int i = 0; i < x.size(); i++)
+        x[i] = 0.0;
+}
+
+void setUpLocations(std::vector<int> &processesLocationSizes,
+                    std::vector<int> &processesDisplacement,
+                    std::vector<int> &processesLocalRows,
+                    std::vector<int> &processesOffsetInRows,
+                    int numberOfProcesses,
+                    InitialConditions initialConditions)
+{
+    processesLocationSizes.resize(numberOfProcesses);
+    processesDisplacement.resize(numberOfProcesses);
+    processesLocalRows.resize(numberOfProcesses);
+    processesOffsetInRows.resize(numberOfProcesses);
+
+    //Divide y between processes
+    for (int i = 0; i < numberOfProcesses; i++)
+        processesLocationSizes[i] = (initialConditions.n / numberOfProcesses) * initialConditions.n;
+
+    //Case of not integer division
+    for (int i = 0; i < initialConditions.n - (initialConditions.n / numberOfProcesses) * (numberOfProcesses); i++)
+        processesLocationSizes[i] += initialConditions.n;
+
+    //Set up number of rows in every location
+    for (int i = 0; i < numberOfProcesses; i++)
+        processesLocalRows[i] = processesLocationSizes[i] / initialConditions.n;
+
+    //Calculating offset for every process
+    //For example we have 8x8 matrix, 4 processes
+    //Then parts will be 0..15, 16..31, 32..47, 48..63
+    int processOffset;
+    for (int i = 0; i < numberOfProcesses; i++)
+    {
+        processOffset = 0;
+        for (int j = 0; j < i; j++)
+            processOffset += processesLocationSizes[j];
+        processesDisplacement[i] = processOffset;
+    }
+
+    int rowsOffset;
+    for (int i = 0; i < numberOfProcesses; i++)
+    {
+        rowsOffset = 0;
+        for (int j = 0; j < i; j++)
+            rowsOffset += processesLocalRows[j];
+        processesOffsetInRows[i] = rowsOffset;
+    }
+
+    printProcessLocations(numberOfProcesses,
+                          processesDisplacement,
+                          processesLocalRows,
+                          processesOffsetInRows,
+                          initialConditions.isDebugMode);
+}
+
+double infiniteNorm(std::vector<double> &x, std::vector<double> &y)
 {
     double norm = 0.0;
     double elem = 0.0;
-    for (int i = begin; i < end; ++i)
+    for (int i = 0; i < x.size(); i++)
     {
         elem = fabs(x[i] - y[i]);
         if (norm < elem)
             norm = elem;
     }
     return norm;
-}
+};
 
-/**
- * Set what parts of initial vector will work with every process
- * @offest and @displacement is all about offset, but @offset is offset in rows
- * while displacement is offset in elements
- * */
-void divideVectorBetweenProcesses(std::vector<double> &y,
-                                  double h,
-                                  int size,
-                                  double kSquare,
-                                  int processesNumber,
-                                  int processId,
-                                  std::vector<double> &yPart,
-                                  std::vector<double> &yPreviousPart,
-                                  std::vector<double> &partOfRightPart,
-                                  //integer array of number of elements sended to each process
-                                  std::vector<int> &numbersOfProcessDataParts,
-                                  //integer array of offsets in relation of y beginning, page 41
-                                  std::vector<int> &displacement,
-                                  //size of part of y, belonging to each process(locationSize)
-                                  int &vectorPartSize,
-                                  int &receiveDisplacement,
-                                  int &extraSize,
-                                  int &offset)
+void readParameters(InitialConditions &initialConditions)
 {
+    std::fstream fileOfParameters;
+    fileOfParameters.open("input/input.txt", std::ios::in);
 
-    std::vector<int> vecOffset(processesNumber);
-
-    if (processId == 0)
+    if (!fileOfParameters)
     {
-        numbersOfProcessDataParts.resize(processesNumber);
-        displacement.resize(processesNumber);
-
-        // divide initial vector on parts
-        for (int i = 0; i < processesNumber; i++)
-            numbersOfProcessDataParts[i] = (size / processesNumber) * size;
-
-        // case of not integer division
-        for (int i = 0; i < size - (size / processesNumber) * (processesNumber); i++)
-            numbersOfProcessDataParts[i] += size;
-
-        displacement[0] = 0;
-        vecOffset[0] = -1;
-
-        //set displacement and offset for all processes
-        for (int i = 0; i < processesNumber - 1; i++)
-        {
-            displacement[i + 1] = displacement[i] + numbersOfProcessDataParts[i];
-            vecOffset[i + 1] = vecOffset[i] + numbersOfProcessDataParts[i] / size;
-        }
-        vecOffset[0] = 0;
+        std::cout << "Error in opening file..\n";
     }
 
-    // this procedures send 1 element of MPI_INT type from led.data/vecOffset from ROOT process
-    // in loc_size/offset variables of MPI_WORLD commutator
-    MPI_Scatter(numbersOfProcessDataParts.data(), 1, MPI_INT, &vectorPartSize, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Scatter(vecOffset.data(), 1, MPI_INT, &offset, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    fileOfParameters >> initialConditions.n;
+    fileOfParameters >> initialConditions.epsilon;
+    initialConditions.setParameters();
 
-    if (processId == 0)
-    {
-        y.resize(size * size);
-        fillVectorWithZeros(y);
-    }
-
-    if (processesNumber > 1)
-    {
-        if ((processId == 0) || (processId == processesNumber - 1))
-        {
-            vectorPartSize += size;
-            extraSize = 0.0;
-        }
-        else
-        {
-            vectorPartSize += 2 * size;
-            extraSize = size;
-        }
-    }
-    else
-        extraSize = -size;
-
-    yPart.resize(vectorPartSize);
-    yPreviousPart.resize(vectorPartSize);
-    partOfRightPart.resize(vectorPartSize);
-
-    receiveDisplacement = (processId == 0) ? 0 : size;
-
-    //Send data from root process, page 41
-    //This will send part of y to every process
-    MPI_Scatterv(y.data(),
-                 numbersOfProcessDataParts.data(),
-                 displacement.data(),
-                 MPI_DOUBLE,
-                 yPart.data() + receiveDisplacement,
-                 vectorPartSize - size - extraSize,
-                 MPI_DOUBLE,
-                 0,
-                 MPI_COMM_WORLD);
-}
-
-void fillVectorWithZeros(std::vector<double> &y)
-{
-    for (int i = 0; i < y.size(); i++)
-        y[i] = 0.0;
-}
-
-void setSourceAndDestination(const int processesNumber, const int processId, int &destination, int &source)
-{
-    destination = processId + 1;
-
-    source = processId - 1;
-
-    if (processId == 0)
-        source = processesNumber - 1;
-    else if (processId == processesNumber - 1)
-        destination = 0;
-}
-
-void logVectorDivision(int processId,
-                       int vectorPartSize,
-                       std::vector<int> &numbersOfProcessDataParts)
-{
-    std::cout << "\033[1;33mLOG DIVISION\033[0m" << std::endl;
-    std::cout << "Process: " << processId << ", his part: " << vectorPartSize << std::endl;
-    if (processId == 0)
-    {
-        for (int i = 0; i < numbersOfProcessDataParts.size(); i++)
-        {
-            std::cout << numbersOfProcessDataParts[i] << " ";
-        }
-        std::cout << std::endl;
-    }
+    fileOfParameters.close();
 }

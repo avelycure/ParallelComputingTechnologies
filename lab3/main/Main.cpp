@@ -10,6 +10,7 @@ int main(int argc, char **argv)
     int processorNameLength;
 
     vector<double> y;
+    //Analytic solution of the equation
     vector<double> solution;
 
     MPI_Init(&argc, &argv);
@@ -23,94 +24,70 @@ int main(int argc, char **argv)
     //get process name and lenght of process name
     MPI_Get_processor_name(processorName, &processorNameLength);
 
-    InitialConditions initialCondition = InitialConditions();
+    InitialConditions initialConditions = InitialConditions();
+    readParameters(initialConditions);
 
     if (processId == 0)
     {
         printLog(
             numberOfProcesses,
-            initialCondition.n,
-            initialCondition.kSquare / (initialCondition.h * initialCondition.h),
-            initialCondition.eps);
+            initialConditions.n,
+            initialConditions.epsilon,
+            initialConditions.isDebugMode);
 
-        y.resize((initialCondition.n + 1) * (initialCondition.n + 1));
-        solution.resize((initialCondition.n + 1) * (initialCondition.n + 1));
+        y.resize((initialConditions.n) * (initialConditions.n));
+        solution.resize((initialConditions.n) * (initialConditions.n));
 
-        initialCondition.computeSolution(solution);
+        initialConditions.computeSolution(solution);
     }
 
-    //Jacobi part
-    // Synchronization, all processes will be blocked until end of the procedure
     MPI_Barrier(MPI_COMM_WORLD);
-    //Used methods: MPI_Send. MPI_Recv
     jacobiV1(y,
-             initialCondition.h,
-             initialCondition.n + 1,
-             initialCondition.kSquare,
+             initialConditions,
              numberOfProcesses,
-             processId,
-             initialCondition.eps,
-             initialCondition,
-             solution);
+             processId);
+    if (processId == 0)
+        std::cout << "Difference(jacobiV1): " << infiniteNorm(y, solution) << std::endl;
 
     MPI_Barrier(MPI_COMM_WORLD);
-    //Used methods: MPI_Sendrecv
     jacobiV2(y,
-             initialCondition.h,
-             initialCondition.n + 1,
-             initialCondition.kSquare,
+             initialConditions,
              numberOfProcesses,
-             processId,
-             initialCondition.eps,
-             initialCondition,
-             solution);
+             processId);
+    if (processId == 0)
+        std::cout << "Difference(jacobiV2): " << infiniteNorm(y, solution) << std::endl;
 
     MPI_Barrier(MPI_COMM_WORLD);
     jacobiV3(y,
-             initialCondition.h,
-             initialCondition.n + 1,
-             initialCondition.kSquare,
+             initialConditions,
              numberOfProcesses,
-             processId,
-             initialCondition.eps,
-             initialCondition,
-             solution);
+             processId);
+    if (processId == 0)
+        std::cout << "Difference(jacobiV3): " << infiniteNorm(y, solution) << std::endl;
 
     MPI_Barrier(MPI_COMM_WORLD);
-    //Used methods: MPI_Send. MPI_Recv
     seidelV1(y,
-             initialCondition.h,
-             initialCondition.n + 1,
-             initialCondition.kSquare,
+             initialConditions,
              numberOfProcesses,
-             processId,
-             initialCondition.eps,
-             initialCondition,
-             solution);
+             processId);
+    if (processId == 0)
+        std::cout << "Difference(seidelV1): " << infiniteNorm(y, solution) << std::endl;
 
     MPI_Barrier(MPI_COMM_WORLD);
-    //Used methods: MPI_Sendrecv
     seidelV2(y,
-             initialCondition.h,
-             initialCondition.n + 1,
-             initialCondition.kSquare,
+             initialConditions,
              numberOfProcesses,
-             processId,
-             initialCondition.eps,
-             initialCondition,
-             solution);
+             processId);
+    if (processId == 0)
+        std::cout << "Difference(seidelV2): " << infiniteNorm(y, solution) << std::endl;
 
     MPI_Barrier(MPI_COMM_WORLD);
-    //Used methods: MPI_Send_init, MPI_Recv_init
     seidelV3(y,
-             initialCondition.h,
-             initialCondition.n + 1,
-             initialCondition.kSquare,
+             initialConditions,
              numberOfProcesses,
-             processId,
-             initialCondition.eps,
-             initialCondition,
-             solution);
+             processId);
+    if (processId == 0)
+        std::cout << "Difference(seidelV3): " << infiniteNorm(y, solution) << std::endl;
 
     MPI_Finalize();
 }

@@ -2,7 +2,7 @@
 #PBS -N FS2EmelinMolochkov
 #PBS -S /bin/bash
 #PBS -l walltime=00:10:00
-#PBS -l nodes=3:ppn=2
+#PBS -l nodes=3:ppn=4
 #PBS -d /home/student/FS18/FS2-x2/MolochkovEmelin/ParallelComputingTechnologies/lab3/compiled
 
-mpirun -np 1 -map-by slot:pe=4 ./lab3.out
+mpirun -np 12 ./lab3.out
