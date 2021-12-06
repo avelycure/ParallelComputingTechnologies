@@ -146,3 +146,20 @@ double infiniteNorm(std::vector<double> &x, std::vector<double> &y)
     }
     return norm;
 };
+
+void readParameters(InitialConditions &initialConditions)
+{
+    std::fstream fileOfParameters;
+    fileOfParameters.open("input/input.txt", std::ios::in);
+
+    if (!fileOfParameters)
+    {
+        std::cout << "Error in opening file..\n";
+    }
+
+    fileOfParameters >> initialConditions.n;
+    fileOfParameters >> initialConditions.epsilon;
+    initialConditions.setParameters();
+
+    fileOfParameters.close();
+}

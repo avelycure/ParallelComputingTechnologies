@@ -152,7 +152,7 @@ void seidelV2(
 
     MPI_Barrier(MPI_COMM_WORLD);
     if (processId == 0)
-        printMethodStatistic("Seidel. MPI_Send. MPI_Recv",
+        printMethodStatistic("Seidel. MPI_Sendrecv",
                              globalNorm,
                              iterationsNumber,
                              timeStart,

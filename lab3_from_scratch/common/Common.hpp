@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <cmath>
 #include "mpi.h"
@@ -9,6 +10,8 @@ void printLog(int numberOfProcesses,
               int sumSize,
               double epsilon,
               bool isDebugMode);
+
+void readParameters(InitialConditions &initialConditions);
 
 void divideResponsibilities(std::vector<double> &y,
                             std::vector<double> &yLocal,

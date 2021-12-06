@@ -79,7 +79,7 @@ void solveRedV3(int processId,
                 std::vector<MPI_Request> &requestsFromLowerToHigherRed,
                 std::vector<MPI_Request> &requestsFromHigherToLowerRed);
 
-void prepareRequests(int processId,
+void prepareSeidelRequests(int processId,
                      int numberOfProcesses,
                      InitialConditions initialConditions,
                      int &lowRequestsBlack,

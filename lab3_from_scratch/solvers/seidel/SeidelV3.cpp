@@ -87,21 +87,21 @@ void seidelV3(
     std::vector<MPI_Request> requestsFromLowerToHigherRed, requestsFromHigherToLowerRed;
     int highRequestsBlack = 0, lowRequestsBlack = 0, highRequestsRed = 0, lowRequestsRed = 0;
 
-    prepareRequests(processId,
-                    numberOfProcesses,
-                    initialConditions,
-                    lowRequestsBlack,
-                    highRequestsBlack,
-                    lowRequestsRed,
-                    highRequestsRed,
-                    yLocalPreviousUpHighBorder,
-                    yLocalPreviousDownLowBorder,
-                    buf1,
-                    buf2,
-                    requestsFromLowerToHigherBlack,
-                    requestsFromHigherToLowerBlack,
-                    requestsFromLowerToHigherRed,
-                    requestsFromHigherToLowerRed);
+    prepareSeidelRequests(processId,
+                          numberOfProcesses,
+                          initialConditions,
+                          lowRequestsBlack,
+                          highRequestsBlack,
+                          lowRequestsRed,
+                          highRequestsRed,
+                          yLocalPreviousUpHighBorder,
+                          yLocalPreviousDownLowBorder,
+                          buf1,
+                          buf2,
+                          requestsFromLowerToHigherBlack,
+                          requestsFromHigherToLowerBlack,
+                          requestsFromLowerToHigherRed,
+                          requestsFromHigherToLowerRed);
 
     std::vector<MPI_Status> stateFromLowerToHigherBlack(highRequestsBlack), stateFromHigherToLowerBlack(lowRequestsBlack);
     std::vector<MPI_Status> stateFromLowerToHigherRed(highRequestsRed), stateFromHigherToLowerRed(lowRequestsRed);
@@ -181,21 +181,21 @@ void seidelV3(
 /**
  * Make requests to higher rank process and lower rank process
  * */
-void prepareRequests(int processId,
-                     int numberOfProcesses,
-                     InitialConditions initialConditions,
-                     int &lowRequestsBlack,
-                     int &highRequestsBlack,
-                     int &lowRequestsRed,
-                     int &highRequestsRed,
-                     std::vector<double> &yLocalPreviousUpHighBorder,
-                     std::vector<double> &yLocalPreviousDownLowBorder,
-                     std::vector<double> &buf1,
-                     std::vector<double> &buf2,
-                     std::vector<MPI_Request> &requestsFromLowerToHigherBlack,
-                     std::vector<MPI_Request> &requestsFromHigherToLowerBlack,
-                     std::vector<MPI_Request> &requestsFromLowerToHigherRed,
-                     std::vector<MPI_Request> &requestsFromHigherToLowerRed)
+void prepareSeidelRequests(int processId,
+                           int numberOfProcesses,
+                           InitialConditions initialConditions,
+                           int &lowRequestsBlack,
+                           int &highRequestsBlack,
+                           int &lowRequestsRed,
+                           int &highRequestsRed,
+                           std::vector<double> &yLocalPreviousUpHighBorder,
+                           std::vector<double> &yLocalPreviousDownLowBorder,
+                           std::vector<double> &buf1,
+                           std::vector<double> &buf2,
+                           std::vector<MPI_Request> &requestsFromLowerToHigherBlack,
+                           std::vector<MPI_Request> &requestsFromHigherToLowerBlack,
+                           std::vector<MPI_Request> &requestsFromLowerToHigherRed,
+                           std::vector<MPI_Request> &requestsFromHigherToLowerRed)
 {
     //Only the first and the last process can send data to one direction others can send in twice
     if ((processId == 0) || (processId == numberOfProcesses - 1))

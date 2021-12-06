@@ -53,4 +53,10 @@ public:
             for (int j = 0; j < n; j++)
                 solution[i * n + j] = analyticSolution(i * h, j * h);
     }
+
+    void setParameters()
+    {
+        h = (rightBorder - leftBorder) / (n - 1.0);
+        k = 1.0 / h;
+    }
 };

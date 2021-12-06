@@ -25,6 +25,7 @@ int main(int argc, char **argv)
     MPI_Get_processor_name(processorName, &processorNameLength);
 
     InitialConditions initialConditions = InitialConditions();
+    readParameters(initialConditions);
 
     if (processId == 0)
     {
