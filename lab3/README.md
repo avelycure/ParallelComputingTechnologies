@@ -5,13 +5,13 @@
 Develop a program for solving the two-dimensional Helmholtz equation
 
 <p>
-  <img src="https://github.com/avelycure/avelycure/blob/master/assets/parallel_technologies/helmholtz/helmholts.png" width="200" />
+  <img src="https://github.com/avelycure/avelycure/blob/master/assets/parallel_technologies/helmholtz/helmholts.png" width="300" />
 </p>
 
 in a square domain (x,y) in [0,1]x[0,1] with border conditions: u(x,0)=u(x,1)=u(0,y)=u(1,y)=0, and right part
 
 <p>
-  <img src="https://github.com/avelycure/avelycure/blob/master/assets/parallel_technologies/helmholtz/right_part.png" width="200" />
+  <img src="https://github.com/avelycure/avelycure/blob/master/assets/parallel_technologies/helmholtz/right_part.png" width="300" />
 </p>
 
 To numerically solve the equation on a rectangular uniform grid use the finite-difference scheme "cross" of the second order of approximation in
