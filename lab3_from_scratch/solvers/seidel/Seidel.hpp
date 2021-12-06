@@ -14,6 +14,11 @@ void seidelV2(std::vector<double> &y,
               int numberOfProcesses,
               int processId);
 
+void seidelV3(std::vector<double> &y,
+              InitialConditions initialConditions,
+              int numberOfProcesses,
+              int processId);
+
 void solveRed(std::vector<double> &yLocal,
               std::vector<double> &yLocalPrevious,
               std::vector<double> &yLocalPreviousUpHighBorder,
