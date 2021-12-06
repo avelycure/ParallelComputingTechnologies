@@ -82,9 +82,122 @@ void seidelV3(
                      localOffsetInRows,
                      initialConditions.isDebugMode);
 
+    //Vectors to handle black and red requests from higher rank processes to lower and vice versa
     std::vector<MPI_Request> requestsFromLowerToHigherBlack, requestsFromHigherToLowerBlack;
     std::vector<MPI_Request> requestsFromLowerToHigherRed, requestsFromHigherToLowerRed;
+    int highRequestsBlack = 0, lowRequestsBlack = 0, highRequestsRed = 0, lowRequestsRed = 0;
 
+    prepareRequests(processId,
+                    numberOfProcesses,
+                    initialConditions,
+                    lowRequestsBlack,
+                    highRequestsBlack,
+                    lowRequestsRed,
+                    highRequestsRed,
+                    yLocalPreviousUpHighBorder,
+                    yLocalPreviousDownLowBorder,
+                    buf1,
+                    buf2,
+                    requestsFromLowerToHigherBlack,
+                    requestsFromHigherToLowerBlack,
+                    requestsFromLowerToHigherRed,
+                    requestsFromHigherToLowerRed);
+
+    std::vector<MPI_Status> stateFromLowerToHigherBlack(highRequestsBlack), stateFromHigherToLowerBlack(lowRequestsBlack);
+    std::vector<MPI_Status> stateFromLowerToHigherRed(highRequestsRed), stateFromHigherToLowerRed(lowRequestsRed);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (processId == 0)
+        timeStart = MPI_Wtime();
+
+    do
+    {
+        iterationsNumber++;
+
+        yLocal.swap(yLocalPrevious);
+
+        solveBlackV3(processId,
+                     numberOfProcesses,
+                     initialConditions,
+                     lowRequestsBlack,
+                     highRequestsBlack,
+                     localRows,
+                     localSize,
+                     localOffsetInRows,
+                     buf1,
+                     buf2,
+                     yLocal,
+                     yLocalPrevious,
+                     yLocalPreviousUpHighBorder,
+                     yLocalPreviousDownLowBorder,
+                     stateFromLowerToHigherBlack,
+                     stateFromHigherToLowerBlack,
+                     requestsFromLowerToHigherBlack,
+                     requestsFromHigherToLowerBlack);
+
+        solveRedV3(processId,
+                   numberOfProcesses,
+                   initialConditions,
+                   lowRequestsRed,
+                   highRequestsRed,
+                   localRows,
+                   localSize,
+                   localOffsetInRows,
+                   buf1,
+                   buf2,
+                   yLocal,
+                   yLocalPrevious,
+                   yLocalPreviousUpHighBorder,
+                   yLocalPreviousDownLowBorder,
+                   stateFromLowerToHigherRed,
+                   stateFromHigherToLowerRed,
+                   requestsFromLowerToHigherRed,
+                   requestsFromHigherToLowerRed);
+
+        localNorm = infiniteNorm(yLocal, yLocalPrevious);
+
+        //If maximum norm is decreasing that means that all norms are decreasing
+        MPI_Allreduce(&localNorm, &globalNorm, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+
+    } while (globalNorm > initialConditions.epsilon);
+
+    if (processId == 0)
+        timeEnd = MPI_Wtime();
+
+    //Filling answer
+    MPI_Gatherv(yLocal.data(), yLocal.size(), MPI_DOUBLE, y.data(), processesLocationSizes.data(),
+                processesDisplacement.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (processId == 0)
+        printMethodStatistic("Seidel. MPI_Send_init. MPI_Recv_init",
+                             globalNorm,
+                             iterationsNumber,
+                             timeStart,
+                             timeEnd,
+                             true);
+}
+
+/**
+ * Make requests to higher rank process and lower rank process
+ * */
+void prepareRequests(int processId,
+                     int numberOfProcesses,
+                     InitialConditions initialConditions,
+                     int &lowRequestsBlack,
+                     int &highRequestsBlack,
+                     int &lowRequestsRed,
+                     int &highRequestsRed,
+                     std::vector<double> &yLocalPreviousUpHighBorder,
+                     std::vector<double> &yLocalPreviousDownLowBorder,
+                     std::vector<double> &buf1,
+                     std::vector<double> &buf2,
+                     std::vector<MPI_Request> &requestsFromLowerToHigherBlack,
+                     std::vector<MPI_Request> &requestsFromHigherToLowerBlack,
+                     std::vector<MPI_Request> &requestsFromLowerToHigherRed,
+                     std::vector<MPI_Request> &requestsFromHigherToLowerRed)
+{
+    //Only the first and the last process can send data to one direction others can send in twice
     if ((processId == 0) || (processId == numberOfProcesses - 1))
     {
         requestsFromLowerToHigherBlack.resize(1);
@@ -99,7 +212,6 @@ void seidelV3(
         requestsFromLowerToHigherRed.resize(2);
         requestsFromHigherToLowerRed.resize(2);
     }
-    int highRequestsBlack = 0, lowRequestsBlack = 0, highRequestsRed = 0, lowRequestsRed = 0;
 
     // black
     if (processId != numberOfProcesses - 1)
@@ -133,121 +245,139 @@ void seidelV3(
         lowRequestsRed++;
         highRequestsRed++;
     }
+}
 
-    std::vector<MPI_Status> stateFromLowerToHigherBlack(highRequestsBlack), stateFromHigherToLowerBlack(lowRequestsBlack);
-    std::vector<MPI_Status> stateFromLowerToHigherRed(highRequestsRed), stateFromHigherToLowerRed(lowRequestsRed);
-
+/**
+ * Solving system using MPI functions MPI_Send_init and MPI_Recv_init. This method is similar to solveBlack() but we can here
+ * we can request data only when we need it. So we wait for first row in the begining of the function and we request last row at the end
+ * */
+void solveBlackV3(int processId,
+                  int numberOfProcesses,
+                  InitialConditions initialConditions,
+                  int &lowRequestsBlack,
+                  int &highRequestsBlack,
+                  int &localRows,
+                  int &localSize,
+                  int &localOffsetInRows,
+                  std::vector<double> &buf1,
+                  std::vector<double> &buf2,
+                  std::vector<double> &yLocal,
+                  std::vector<double> &yLocalPrevious,
+                  std::vector<double> &yLocalPreviousUpHighBorder,
+                  std::vector<double> &yLocalPreviousDownLowBorder,
+                  std::vector<MPI_Status> &stateFromLowerToHigherBlack,
+                  std::vector<MPI_Status> &stateFromHigherToLowerBlack,
+                  std::vector<MPI_Request> &requestsFromLowerToHigherBlack,
+                  std::vector<MPI_Request> &requestsFromHigherToLowerBlack)
+{
     //Local renaming to increase readability
     double h = initialConditions.h;
     int n = initialConditions.n;
     //Just coefficient of the equation
     double c = 1.0 / (4.0 + initialConditions.h * initialConditions.h * initialConditions.k * initialConditions.k);
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    if (processId == 0)
-        timeStart = MPI_Wtime();
+    //Exchanging previous! values of solution
+    copyLastRow(yLocalPrevious, buf1, initialConditions);
+    MPI_Startall(highRequestsBlack, requestsFromLowerToHigherBlack.data());
 
-    do
-    {
-        iterationsNumber++;
+    MPI_Waitall(highRequestsBlack, requestsFromLowerToHigherBlack.data(), stateFromLowerToHigherBlack.data());
+    //In this part we solve equation with previous! values of yLocal
 
-        yLocal.swap(yLocalPrevious);
+    if (processId != 0)
+        for (int j = (localOffsetInRows % 2 == 0) ? 2 : 1; j < n - 1; j += 2)
+            yLocal[j] = c * (h * h * initialConditions.f(localOffsetInRows * h, j * h) +
+                             yLocalPreviousUpHighBorder[j] +
+                             yLocalPrevious[n + j] +
+                             yLocalPrevious[j - 1] +
+                             yLocalPrevious[j + 1]);
+    //Else if it is first process do nothing because initial conditions in the first row are zeros
 
-        //Exchanging previous! values of solution
-        copyLastRow(yLocalPrevious, buf1, initialConditions);
-        MPI_Startall(highRequestsBlack, requestsFromLowerToHigherBlack.data());
+    //Calculate only rows that are not borders of process part
+    for (int i = 1; i < localRows - 1; i++)
+        for (int j = ((localOffsetInRows + i) % 2 == 0) ? 2 : 1; j < n - 1; j += 2)
+            yLocal[i * n + j] = c * (h * h * initialConditions.f((localOffsetInRows + i) * h, j * h) +
+                                     yLocalPrevious[(i - 1) * n + j] +
+                                     yLocalPrevious[(i + 1) * n + j] +
+                                     yLocalPrevious[i * n + (j - 1)] +
+                                     yLocalPrevious[i * n + (j + 1)]);
 
-        MPI_Waitall(highRequestsBlack, requestsFromLowerToHigherBlack.data(), stateFromLowerToHigherBlack.data());
-        //In this part we solve equation with previous! values of yLocal
+    //Exchanging current! values of solution
+    copyFirstRow(yLocalPrevious, buf2, initialConditions);
+    MPI_Startall(lowRequestsBlack, requestsFromHigherToLowerBlack.data());
+    MPI_Waitall(lowRequestsBlack, requestsFromHigherToLowerBlack.data(), stateFromHigherToLowerBlack.data());
 
-        if (processId != 0)
-            for (int j = (localOffsetInRows % 2 == 0) ? 2 : 1; j < n - 1; j += 2)
-                yLocal[j] = c * (h * h * initialConditions.f(localOffsetInRows * h, j * h) +
-                                 yLocalPreviousUpHighBorder[j] +
-                                 yLocalPrevious[n + j] +
-                                 yLocalPrevious[j - 1] +
-                                 yLocalPrevious[j + 1]);
-        //Else if it is first process do nothing because initial conditions in the first row are zeros
+    if (processId != numberOfProcesses - 1)
+        for (int j = ((localOffsetInRows + localRows - 1) % 2 == 0) ? 2 : 1; j < n - 1; j += 2)
+            yLocal[localSize - n + j] = c * (h * h * initialConditions.f((localOffsetInRows + localRows - 1) * h, j * h) +
+                                             yLocalPrevious[localSize - 2 * n + j] +
+                                             yLocalPreviousDownLowBorder[j] +
+                                             yLocalPrevious[localSize - n + j - 1] +
+                                             yLocalPrevious[localSize - n + j + 1]);
+}
 
-        //Calculate only rows that are not borders of process part
-        for (int i = 1; i < localRows - 1; i++)
-            for (int j = ((localOffsetInRows + i) % 2 == 0) ? 2 : 1; j < n - 1; j += 2)
-                yLocal[i * n + j] = c * (h * h * initialConditions.f((localOffsetInRows + i) * h, j * h) +
-                                         yLocalPrevious[(i - 1) * n + j] +
-                                         yLocalPrevious[(i + 1) * n + j] +
-                                         yLocalPrevious[i * n + (j - 1)] +
-                                         yLocalPrevious[i * n + (j + 1)]);
+/**
+ * Solving system using MPI functions MPI_Send_init and MPI_Recv_init. This method is similar to solveBlack() but we can here
+ * we can request data only when we need it. So we wait for first row in the begining of the function and we request last row at the end
+ * */
+void solveRedV3(int processId,
+                int numberOfProcesses,
+                InitialConditions initialConditions,
+                int &lowRequestsRed,
+                int &highRequestsRed,
+                int &localRows,
+                int &localSize,
+                int &localOffsetInRows,
+                std::vector<double> &buf1,
+                std::vector<double> &buf2,
+                std::vector<double> &yLocal,
+                std::vector<double> &yLocalPrevious,
+                std::vector<double> &yLocalPreviousUpHighBorder,
+                std::vector<double> &yLocalPreviousDownLowBorder,
+                std::vector<MPI_Status> &stateFromLowerToHigherRed,
+                std::vector<MPI_Status> &stateFromHigherToLowerRed,
+                std::vector<MPI_Request> &requestsFromLowerToHigherRed,
+                std::vector<MPI_Request> &requestsFromHigherToLowerRed)
+{
+    //Local renaming to increase readability
+    double h = initialConditions.h;
+    int n = initialConditions.n;
+    //Just coefficient of the equation
+    double c = 1.0 / (4.0 + initialConditions.h * initialConditions.h * initialConditions.k * initialConditions.k);
 
-        //Exchanging current! values of solution
-        copyFirstRow(yLocalPrevious, buf2, initialConditions);
-        MPI_Startall(lowRequestsBlack, requestsFromHigherToLowerBlack.data());
-        MPI_Waitall(lowRequestsBlack, requestsFromHigherToLowerBlack.data(), stateFromHigherToLowerBlack.data());
+    //Exchanging previous! values of solution
+    copyLastRow(yLocal, buf1, initialConditions);
+    MPI_Startall(highRequestsRed, requestsFromLowerToHigherRed.data());
+    MPI_Waitall(highRequestsRed, requestsFromLowerToHigherRed.data(), stateFromLowerToHigherRed.data());
 
-        if (processId != numberOfProcesses - 1)
-            for (int j = ((localOffsetInRows + localRows - 1) % 2 == 0) ? 2 : 1; j < n - 1; j += 2)
-                yLocal[localSize - n + j] = c * (h * h * initialConditions.f((localOffsetInRows + localRows - 1) * h, j * h) +
-                                                 yLocalPrevious[localSize - 2 * n + j] +
-                                                 yLocalPreviousDownLowBorder[j] +
-                                                 yLocalPrevious[localSize - n + j - 1] +
-                                                 yLocalPrevious[localSize - n + j + 1]);
+    //In this part we solve equation with current! values of yLocal
+    if (processId != 0)
+        for (int j = (localOffsetInRows % 2 == 0) ? 1 : 2; j < n - 1; j += 2)
+            yLocal[j] = c * (h * h * initialConditions.f(localOffsetInRows * h, j * h) +
+                             yLocalPreviousUpHighBorder[j] +
+                             yLocal[n + j] +
+                             yLocal[j - 1] +
+                             yLocal[j + 1]);
+    //Else if it is first process do nothing because initial conditions in the first row are zeros
 
-        //Exchanging previous! values of solution
-        copyLastRow(yLocal, buf1, initialConditions);
-        MPI_Startall(highRequestsRed, requestsFromLowerToHigherRed.data());
-        MPI_Waitall(highRequestsRed, requestsFromLowerToHigherRed.data(), stateFromLowerToHigherRed.data());
+    //Calculate only rows that are not borders of process part
+    for (int i = 1; i < localRows - 1; i++)
+        for (int j = ((localOffsetInRows + i) % 2 == 0) ? 1 : 2; j < n - 1; j += 2)
+            yLocal[i * n + j] = c * (h * h * initialConditions.f((localOffsetInRows + i) * h, j * h) +
+                                     yLocal[(i - 1) * n + j] +
+                                     yLocal[(i + 1) * n + j] +
+                                     yLocal[i * n + (j - 1)] +
+                                     yLocal[i * n + (j + 1)]);
 
-        //In this part we solve equation with current! values of yLocal
-        if (processId != 0)
-            for (int j = (localOffsetInRows % 2 == 0) ? 1 : 2; j < n - 1; j += 2)
-                yLocal[j] = c * (h * h * initialConditions.f(localOffsetInRows * h, j * h) +
-                                 yLocalPreviousUpHighBorder[j] +
-                                 yLocal[n + j] +
-                                 yLocal[j - 1] +
-                                 yLocal[j + 1]);
-        //Else if it is first process do nothing because initial conditions in the first row are zeros
+    //Exchanging current! values of solution
+    copyFirstRow(yLocal, buf2, initialConditions);
+    MPI_Startall(lowRequestsRed, requestsFromHigherToLowerRed.data());
+    MPI_Waitall(lowRequestsRed, requestsFromHigherToLowerRed.data(), stateFromHigherToLowerRed.data());
 
-        //Calculate only rows that are not borders of process part
-        for (int i = 1; i < localRows - 1; i++)
-            for (int j = ((localOffsetInRows + i) % 2 == 0) ? 1 : 2; j < n - 1; j += 2)
-                yLocal[i * n + j] = c * (h * h * initialConditions.f((localOffsetInRows + i) * h, j * h) +
-                                         yLocal[(i - 1) * n + j] +
-                                         yLocal[(i + 1) * n + j] +
-                                         yLocal[i * n + (j - 1)] +
-                                         yLocal[i * n + (j + 1)]);
-
-        //Exchanging current! values of solution
-        copyFirstRow(yLocal, buf2, initialConditions);
-        MPI_Startall(lowRequestsRed, requestsFromHigherToLowerRed.data());
-        MPI_Waitall(lowRequestsRed, requestsFromHigherToLowerRed.data(), stateFromHigherToLowerRed.data());
-
-        if (processId != numberOfProcesses - 1)
-            for (int j = ((localOffsetInRows + localRows - 1) % 2 == 0) ? 1 : 2; j < n - 1; j += 2)
-                yLocal[localSize - n + j] = c * (h * h * initialConditions.f((localOffsetInRows + localRows - 1) * h, j * h) +
-                                                 yLocal[localSize - 2 * n + j] +
-                                                 yLocalPreviousDownLowBorder[j] +
-                                                 yLocal[localSize - n + j - 1] +
-                                                 yLocal[localSize - n + j + 1]);
-
-        localNorm = infiniteNorm(yLocal, yLocalPrevious);
-
-        //If maximum norm is decreasing that means that all norms are decreasing
-        MPI_Allreduce(&localNorm, &globalNorm, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-
-    } while (globalNorm > initialConditions.epsilon);
-
-    if (processId == 0)
-        timeEnd = MPI_Wtime();
-
-    //Filling answer
-    MPI_Gatherv(yLocal.data(), yLocal.size(), MPI_DOUBLE, y.data(), processesLocationSizes.data(),
-                processesDisplacement.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    if (processId == 0)
-        printMethodStatistic("Seidel. MPI_Send_init. MPI_Recv_init",
-                             globalNorm,
-                             iterationsNumber,
-                             timeStart,
-                             timeEnd,
-                             true);
+    if (processId != numberOfProcesses - 1)
+        for (int j = ((localOffsetInRows + localRows - 1) % 2 == 0) ? 1 : 2; j < n - 1; j += 2)
+            yLocal[localSize - n + j] = c * (h * h * initialConditions.f((localOffsetInRows + localRows - 1) * h, j * h) +
+                                             yLocal[localSize - 2 * n + j] +
+                                             yLocalPreviousDownLowBorder[j] +
+                                             yLocal[localSize - n + j - 1] +
+                                             yLocal[localSize - n + j + 1]);
 }
