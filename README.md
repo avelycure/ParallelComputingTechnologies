@@ -6,3 +6,7 @@ Laboratory works on parallel computing technology courses using OpenMp, MPI and 
 * Realization of binary tree
 * Solving Helholts equation is square
 * NBody problem
+## Features
+* MPI
+* OMP
+* Cuda
