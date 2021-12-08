@@ -4,3 +4,5 @@ Laboratory works on parallel computing technology courses using OpenMp, MPI and 
 ## List of laboratory works
 * Matrix LU decomposition
 * Realization of binary tree
+* Solving Helholts equation is square
+* NBody problem
