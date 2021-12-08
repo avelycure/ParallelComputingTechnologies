@@ -7,6 +7,6 @@ Laboratory works on parallel computing technology courses using OpenMp, MPI and 
 * Solving Helmholts equation is square
 * NBody problem
 ## Features
-* MPI
-* OMP
-* Cuda
+* [MPI](https://www.open-mpi.org/)
+* [OMP](https://www.openmp.org/)
+* [CUDA](https://developer.nvidia.com/cuda-toolkit)
