@@ -280,6 +280,19 @@ void solveBlackV3(int processId,
     copyLastRow(yLocalPrevious, buf1, initialConditions);
     MPI_Startall(highRequestsBlack, requestsFromLowerToHigherBlack.data());
 
+    //Exchanging current! values of solution
+    copyFirstRow(yLocalPrevious, buf2, initialConditions);
+    MPI_Startall(lowRequestsBlack, requestsFromHigherToLowerBlack.data());
+
+    //Calculate only rows that are not borders of process part
+    for (int i = 1; i < localRows - 1; i++)
+        for (int j = ((localOffsetInRows + i) % 2 == 0) ? 2 : 1; j < n - 1; j += 2)
+            yLocal[i * n + j] = c * (h * h * initialConditions.f((localOffsetInRows + i) * h, j * h) +
+                                     yLocalPrevious[(i - 1) * n + j] +
+                                     yLocalPrevious[(i + 1) * n + j] +
+                                     yLocalPrevious[i * n + (j - 1)] +
+                                     yLocalPrevious[i * n + (j + 1)]);
+
     MPI_Waitall(highRequestsBlack, requestsFromLowerToHigherBlack.data(), stateFromLowerToHigherBlack.data());
     //In this part we solve equation with previous! values of yLocal
 
@@ -292,18 +305,6 @@ void solveBlackV3(int processId,
                              yLocalPrevious[j + 1]);
     //Else if it is first process do nothing because initial conditions in the first row are zeros
 
-    //Calculate only rows that are not borders of process part
-    for (int i = 1; i < localRows - 1; i++)
-        for (int j = ((localOffsetInRows + i) % 2 == 0) ? 2 : 1; j < n - 1; j += 2)
-            yLocal[i * n + j] = c * (h * h * initialConditions.f((localOffsetInRows + i) * h, j * h) +
-                                     yLocalPrevious[(i - 1) * n + j] +
-                                     yLocalPrevious[(i + 1) * n + j] +
-                                     yLocalPrevious[i * n + (j - 1)] +
-                                     yLocalPrevious[i * n + (j + 1)]);
-
-    //Exchanging current! values of solution
-    copyFirstRow(yLocalPrevious, buf2, initialConditions);
-    MPI_Startall(lowRequestsBlack, requestsFromHigherToLowerBlack.data());
     MPI_Waitall(lowRequestsBlack, requestsFromHigherToLowerBlack.data(), stateFromHigherToLowerBlack.data());
 
     if (processId != numberOfProcesses - 1)
@@ -347,6 +348,20 @@ void solveRedV3(int processId,
     //Exchanging previous! values of solution
     copyLastRow(yLocal, buf1, initialConditions);
     MPI_Startall(highRequestsRed, requestsFromLowerToHigherRed.data());
+
+    //Exchanging current! values of solution
+    copyFirstRow(yLocal, buf2, initialConditions);
+    MPI_Startall(lowRequestsRed, requestsFromHigherToLowerRed.data());
+
+    //Calculate only rows that are not borders of process part
+    for (int i = 1; i < localRows - 1; i++)
+        for (int j = ((localOffsetInRows + i) % 2 == 0) ? 1 : 2; j < n - 1; j += 2)
+            yLocal[i * n + j] = c * (h * h * initialConditions.f((localOffsetInRows + i) * h, j * h) +
+                                     yLocal[(i - 1) * n + j] +
+                                     yLocal[(i + 1) * n + j] +
+                                     yLocal[i * n + (j - 1)] +
+                                     yLocal[i * n + (j + 1)]);
+
     MPI_Waitall(highRequestsRed, requestsFromLowerToHigherRed.data(), stateFromLowerToHigherRed.data());
 
     //In this part we solve equation with current! values of yLocal
@@ -359,18 +374,6 @@ void solveRedV3(int processId,
                              yLocal[j + 1]);
     //Else if it is first process do nothing because initial conditions in the first row are zeros
 
-    //Calculate only rows that are not borders of process part
-    for (int i = 1; i < localRows - 1; i++)
-        for (int j = ((localOffsetInRows + i) % 2 == 0) ? 1 : 2; j < n - 1; j += 2)
-            yLocal[i * n + j] = c * (h * h * initialConditions.f((localOffsetInRows + i) * h, j * h) +
-                                     yLocal[(i - 1) * n + j] +
-                                     yLocal[(i + 1) * n + j] +
-                                     yLocal[i * n + (j - 1)] +
-                                     yLocal[i * n + (j + 1)]);
-
-    //Exchanging current! values of solution
-    copyFirstRow(yLocal, buf2, initialConditions);
-    MPI_Startall(lowRequestsRed, requestsFromHigherToLowerRed.data());
     MPI_Waitall(lowRequestsRed, requestsFromHigherToLowerRed.data(), stateFromHigherToLowerRed.data());
 
     if (processId != numberOfProcesses - 1)

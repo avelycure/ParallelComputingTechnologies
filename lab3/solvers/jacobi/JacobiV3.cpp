@@ -209,7 +209,6 @@ void prepareJacobiRequests(int processId,
     }
 }
 
-
 /**
  * Solving system using MPI functions MPI_Send_init and MPI_Recv_init. This method is similar to solveSystem() but we can here
  * we can request data only when we need it. So we wait for first row in the begining of the function and we request last row at the end
@@ -243,17 +242,9 @@ void solveSystemV3(std::vector<double> &yLocal,
     copyLastRow(yLocalPrevious, buf1, initialConditions);
     MPI_Startall(highRequests, requestsFromLowerToHigher.data());
 
-    //Wait until we get the row before first to begin calculation
-    MPI_Waitall(highRequests, requestsFromLowerToHigher.data(), transactionStateFromTop.data());
-
-    if (processId != 0)
-        for (int j = 1; j < n - 1; j++)
-            yLocal[j] = c * (h * h * initialConditions.f(localOffsetInRows * h, j * h) +
-                             yLocalPreviousUpHighBorder[j] +
-                             yLocalPrevious[n + j] +
-                             yLocalPrevious[j - 1] +
-                             yLocalPrevious[j + 1]);
-    //Else if it is first process do nothing because initial conditions in the first row are zeros
+    //We need last row so we begin transfering data in first rows to lower rank processes
+    copyFirstRow(yLocalPrevious, buf2, initialConditions);
+    MPI_Startall(lowRequests, requestsFromHigherToLower.data());
 
     //Calculate only rows that are not borders of process part
     for (int i = 1; i < localRows - 1; i++)
@@ -264,13 +255,19 @@ void solveSystemV3(std::vector<double> &yLocal,
                                      yLocalPrevious[i * n + (j - 1)] +
                                      yLocalPrevious[i * n + (j + 1)]);
 
-    //We need last row so we begin transfering data in first rows to lower rank processes
-    copyFirstRow(yLocalPrevious, buf2, initialConditions);
-    MPI_Startall(lowRequests, requestsFromHigherToLower.data());
+    //Wait until we get the row before first to begin calculation
+    MPI_Waitall(highRequests, requestsFromLowerToHigher.data(), transactionStateFromTop.data());
+    if (processId != 0)
+        for (int j = 1; j < n - 1; j++)
+            yLocal[j] = c * (h * h * initialConditions.f(localOffsetInRows * h, j * h) +
+                             yLocalPreviousUpHighBorder[j] +
+                             yLocalPrevious[n + j] +
+                             yLocalPrevious[j - 1] +
+                             yLocalPrevious[j + 1]);
+    //Else if it is first process do nothing because initial conditions in the first row are zeros
 
     //Wait until we get the row after last to begin calculation
     MPI_Waitall(lowRequests, requestsFromHigherToLower.data(), transactionStateFromBottom.data());
-
     if (processId != numberOfProcesses - 1)
         for (int j = 1; j < n - 1; j++)
             yLocal[localSize - n + j] = c * (h * h * initialConditions.f((localOffsetInRows + localRows - 1) * h, j * h) +
