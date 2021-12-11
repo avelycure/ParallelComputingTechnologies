@@ -77,3 +77,20 @@ Time: milliseconds
 |1|0|84|56|43|
 |2|19|17|13|17|
 |3|0|0|0|0|
+
+## Conclusion
+For n = 128 (I quote the Jacobi operating time, time in seconds):
+
+|Nodes\Cores|1|2|
+|:----------:|:----------:|:----------:
+|1|0.025|0.013|
+|2|0.045|0|
+
+It turns out that small transfers slow down the program. For comparison, the calculation was performed at n = 1024:
+
+|Nodes\Cores|1|2|
+|:----------:|:----------:|:----------:
+|1|1.72|0.89|
+|2|0.93|0|
+
+In this case, the calculations take more time and you can see that the division into processes allows you to calculate faster
