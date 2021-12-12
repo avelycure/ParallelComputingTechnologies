@@ -2,7 +2,9 @@
 Creating binary tree with C++ using OMP library.
 
 ## Time
+
 ### Building tree
+
 |Number of kernels|Time(ms)|Acceleration|
 |:----------:|:----------:|:----------:|:----------:|:----------:|
 |1|11187||
@@ -10,6 +12,7 @@ Creating binary tree with C++ using OMP library.
 |4|3526|3.17x|
 
 ### Finding sum
+
 |Number of kernels|Time(ms)|Acceleration|
 |:----------:|:----------:|:----------:|:----------:|:----------:|
 |1|4326||
@@ -17,6 +20,7 @@ Creating binary tree with C++ using OMP library.
 |4|1152|3.76x|
 
 ### Overall
+
 |Number of kernels|Time(ms)|Acceleration|
 |:----------:|:----------:|:----------:|:----------:|:----------:|
 |1|15513||
@@ -28,6 +32,7 @@ Creating binary tree with C++ using OMP library.
 On [gwassel](https://github.com/gwassel) notebook:
 
 ### Building tree
+
 |Number of kernels|Time(ms)|Acceleration|
 |:----------:|:----------:|:----------:|:----------:|:----------:|
 |1|16952||
@@ -36,6 +41,7 @@ On [gwassel](https://github.com/gwassel) notebook:
 More acceleration due to less time spent in the critical section
 
 ### Finding sum
+
 |Number of kernels|Time(ms)|Acceleration|
 |:----------:|:----------:|:----------:|:----------:|:----------:|
 |1|5762||
