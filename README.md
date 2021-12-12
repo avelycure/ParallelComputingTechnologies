@@ -5,7 +5,7 @@ Laboratory works on parallel computing technology courses using OpenMp, MPI and 
 * Matrix LU decomposition
 * Realization of binary tree
 * Solving Helmholts equation is square
-* NBody problem
+* NBody simulation
 ## Features
 * [MPI](https://www.open-mpi.org/)
 * [OMP](https://www.openmp.org/)
