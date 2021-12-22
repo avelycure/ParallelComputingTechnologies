@@ -32,7 +32,7 @@
 *.app
 
 # vsCode files
-/lab3/.vscode
+*.vscode
 
 /lab3/libs
 
