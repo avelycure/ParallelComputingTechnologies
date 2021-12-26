@@ -229,13 +229,13 @@ int main(int argc, char **argv)
         rungekutta2(init, masses, 0.1, 0.05, 1, "out.txt");
     auto t2 = chrono::high_resolution_clock::now();
     if (rank == 0)
-        cout << "Elapsed seq time = " << chrono::duration_cast<chrono::seconds>(t2 - t1).count() << " seconds \n";
+        cout << "Elapsed seq time = " << chrono::duration_cast<chrono::milliseconds>(t2 - t1).count() << " milliseconds \n";
 
     t1 = chrono::high_resolution_clock::now();
     rungekutta2_mpiopenmp(init, masses, 0.1, 0.05, 1, "out3.txt", np, rank);
     t2 = chrono::high_resolution_clock::now();
     if (rank == 0)
-        cout << "Elapsed mpi+openmp time = " << chrono::duration_cast<chrono::seconds>(t2 - t1).count() << " seconds \n";
+        cout << "Elapsed mpi+openmp time = " << chrono::duration_cast<chrono::milliseconds>(t2 - t1).count() << " milliseconds \n";
 
     MPI_Finalize();
 
