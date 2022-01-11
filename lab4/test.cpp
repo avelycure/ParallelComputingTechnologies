@@ -94,7 +94,9 @@ vector<double> func_mpi(vector<double> &posvel, const vector<double> &masses, in
     vector<double> result(6 * n);
     vector<double> resultAll;
     if (rank == 0)
+    {
         resultAll.resize(6 * n);
+    }
 #pragma omp parallel for
     for (int i = rank * n / np; i < (rank + 1) * n / np; ++i)
     {
