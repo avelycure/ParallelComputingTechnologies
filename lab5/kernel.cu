@@ -207,7 +207,7 @@ int main(int argc, char **argv)
     vector<double> masses;
     
     size_t N = 5000;
-    bool seq = False;
+    bool seq = false;
  
     init.resize(6 * N);
     masses.resize(N);
