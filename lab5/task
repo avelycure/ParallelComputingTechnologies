@@ -1,0 +1,10 @@
+#!/bin/bash
+#PBS -N MolEm5
+#PBS -S /bin/bash
+#PBS -l walltime=04:05:40
+#PBS -l nodes=1:ppn=1
+#PBS -d /home/student/FS18/FS2-x2/MolochkovEmelin/lab5_/ParallelComputingTechnologies/lab5
+
+cat $PBS_NODEFILE
+
+mpirun -np 1 ./run

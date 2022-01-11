@@ -203,23 +203,14 @@ void rungekutta2par(const vector<double> &init, const vector<double> &masses, do
 
 int main(int argc, char **argv)
 {
-    size_t N = 20000;
-
-    vector<double> init = {1.0, 0.0, 0.0, 0.0, 0.9, 0.0,
-                           0.0, 1.0, 0.0, -0.9, 0.0, 0.0,
-                           -1.0, 0.0, 0.0, 0.0, -0.9, 0.0,
-                           0.0, -1.0, 0.0, 0.9, 0.0, 0.0};
-    vector<double> init2(init.size());
-    for (int i = 0; i < init.size() / 6; ++i)
-    {
-        init2[3 * i] = init[6 * i];
-        init2[3 * i + 1] = init[6 * i + 1];
-        init2[3 * i + 2] = init[6 * i + 2];
-        init2[3 * i + init.size() / 2] = init[6 * i + 3];
-        init2[3 * i + init.size() / 2 + 1] = init[6 * i + 4];
-        init2[3 * i + init.size() / 2 + 2] = init[6 * i + 5];
-    }
-    vector<double> masses = {8810324116.227, 8810324116.227, 8810324116.227, 8810324116.227};
+    vector<double> init;
+    vector<double> masses;
+    
+    size_t N = 5000;
+    bool seq = False;
+ 
+    init.resize(6 * N);
+    masses.resize(N);
 
     std::random_device seeder;
     const auto seed = seeder.entropy() ? seeder() : time(nullptr);
@@ -231,9 +222,6 @@ int main(int argc, char **argv)
     auto rndvel = std::bind(distr2, eng);
     auto rndmas = std::bind(distr2, eng);
 
-    init.resize(6 * N);
-    masses.resize(N);
-
     for (int i = 0; i < 3 * N; ++i)
         init[i] = rndpos();
     for (int i = 3 * N; i < 6 * N; ++i)
@@ -242,7 +230,8 @@ int main(int argc, char **argv)
         masses[i] = rndmas();
 
     auto t1 = chrono::high_resolution_clock::now();
-    rungekutta2(init, masses, 0.1, 0.05, 1, "out2");
+    if(seq)
+        rungekutta2(init, masses, 0.1, 0.05, 1, "out2");
     auto t2 = chrono::high_resolution_clock::now();
 
     auto seqtime = chrono::duration_cast<chrono::milliseconds>(t2 - t1).count();
